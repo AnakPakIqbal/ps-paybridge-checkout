@@ -1,0 +1,8 @@
+{
+  "threshold": 1,
+  "reporters": ["console", "html"],
+  "ignore": ["node_modules/**", "dist/**", "**/*.woff2"],
+  "output": "./coverage/jscpd",
+  "format": ["javascript", "jsx"],
+  "absolute": true
+}

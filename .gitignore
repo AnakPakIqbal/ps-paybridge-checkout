@@ -1,4 +1,33 @@
+# Dependencies
 node_modules
+
+# Build output
 dist
+stats.html
+
+# Testing / coverage
+coverage
+.jscpd-report
+
+# Env files
 .env
 .env.local
+.env.*.local
+.env.production
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Editor / OS
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+Thumbs.db
+
+# TypeScript
+*.tsbuildinfo

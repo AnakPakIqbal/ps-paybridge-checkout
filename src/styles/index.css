@@ -22,32 +22,34 @@
 @tailwind components;
 @tailwind utilities;
 
-html, body, #root {
+html,
+body,
+#root {
   height: 100%;
 }
 
-/* Custom premium scrollbar style for dark-green cyber theme */
+/* Custom scrollbar style for the light blue PayBridge theme */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #0b0d0c;
+  background: #f4f7fc;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #232827;
+  background: #d7e0f0;
   border-radius: 9999px;
-  border: 1px solid #0b0d0c;
+  border: 1px solid #f4f7fc;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #2fae66;
+  background: #1f5fd6;
 }
 
 /* Firefox scrollbar support */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #232827 #0b0d0c;
+  scrollbar-color: #d7e0f0 #f4f7fc;
 }
