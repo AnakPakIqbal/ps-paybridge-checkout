@@ -1,0 +1,53 @@
+/* Self-hosted — the checkout route's CSP allows script/style only from
+   'self' plus the PSP script hosts, so no font CDN (Google Fonts etc.) can
+   be linked directly; these files are bundled by Vite from src/assets/fonts
+   and served same-origin. */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('../assets/fonts/inter-variable.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 500 600;
+  font-display: swap;
+  src: url('../assets/fonts/jetbrains-mono-variable.woff2') format('woff2');
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body, #root {
+  height: 100%;
+}
+
+/* Custom premium scrollbar style for dark-green cyber theme */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0b0d0c;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #232827;
+  border-radius: 9999px;
+  border: 1px solid #0b0d0c;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #2fae66;
+}
+
+/* Firefox scrollbar support */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #232827 #0b0d0c;
+}
