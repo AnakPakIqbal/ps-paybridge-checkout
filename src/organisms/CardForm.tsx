@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { CardDetails } from '../hooks/useCardForm';
 
 import Input from '../atoms/Input';
-import VirtualCard from '../molecules/VirtualCard';
+import VirtualCard, { getCardBrand } from '../molecules/VirtualCard';
 
 function formatCardNumber(value: string) {
   const digits = value.replace(/\D/g, '').slice(0, 16);
@@ -23,11 +23,16 @@ interface CardFormProps {
     field: TField,
     value: CardDetails[TField],
   ) => void;
+  hidePreview?: boolean;
 }
 
 type FocusedField = keyof CardDetails | null;
 
-export default function CardForm({ details, onUpdateField }: Readonly<CardFormProps>) {
+export default function CardForm({
+  details,
+  onUpdateField,
+  hidePreview = false,
+}: Readonly<CardFormProps>) {
   const { number, firstName, lastName, expiry, cvv } = details;
   const cardPreviewRef = useRef<HTMLDivElement>(null);
   const [focusedField, setFocusedField] = useState<FocusedField>(null);
@@ -39,8 +44,9 @@ export default function CardForm({ details, onUpdateField }: Readonly<CardFormPr
       .match(/.{1,4}/g) ?? []
   ).join(' ');
   const fullName = [firstName, lastName].filter(Boolean).join(' ');
+  const cvvLength = getCardBrand(number) === 'amex' ? 4 : 3;
 
-  const hasStartedTyping = Boolean(number || firstName || lastName || expiry || cvv);
+  const hasStartedTyping = !hidePreview && Boolean(number || firstName || lastName || expiry || cvv);
 
   // 3D slide, spin and scale entry animation on typing start, hide on empty
   useEffect(() => {
@@ -108,6 +114,7 @@ export default function CardForm({ details, onUpdateField }: Readonly<CardFormPr
             setFocusedField(null);
           }}
           inputMode="numeric"
+          progress={number.replace(/\s/g, '').length / 16}
         />
 
         <div className="grid grid-cols-2 gap-4">
@@ -125,13 +132,14 @@ export default function CardForm({ details, onUpdateField }: Readonly<CardFormPr
               setFocusedField(null);
             }}
             inputMode="numeric"
+            progress={expiry.replace(/\D/g, '').length / 4}
           />
           <Input
             label="CVV"
-            placeholder="•••"
+            placeholder={'•'.repeat(cvvLength)}
             value={cvv}
             onChange={(event) => {
-              onUpdateField('cvv', event.target.value.replace(/\D/g, '').slice(0, 4));
+              onUpdateField('cvv', event.target.value.replace(/\D/g, '').slice(0, cvvLength));
             }}
             onFocus={() => {
               setFocusedField('cvv');
@@ -141,6 +149,7 @@ export default function CardForm({ details, onUpdateField }: Readonly<CardFormPr
             }}
             inputMode="numeric"
             type="password"
+            progress={cvv.length / cvvLength}
           />
         </div>
 
@@ -158,6 +167,11 @@ export default function CardForm({ details, onUpdateField }: Readonly<CardFormPr
             onBlur={() => {
               setFocusedField(null);
             }}
+            progress={
+              focusedField !== 'firstName' && firstName.trim().length > 0
+                ? 1
+                : firstName.trim().length / 12
+            }
           />
           <Input
             label="Last Name"
@@ -172,6 +186,11 @@ export default function CardForm({ details, onUpdateField }: Readonly<CardFormPr
             onBlur={() => {
               setFocusedField(null);
             }}
+            progress={
+              focusedField !== 'lastName' && lastName.trim().length > 0
+                ? 1
+                : lastName.trim().length / 12
+            }
           />
         </div>
       </div>

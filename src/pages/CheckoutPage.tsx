@@ -10,7 +10,7 @@ import type {
 } from '../types/checkout';
 
 import { icons } from '../atoms/icons';
-import { useCardForm } from '../hooks/useCardForm';
+import { isCardFormComplete, useCardForm } from '../hooks/useCardForm';
 import SecureNotice from '../molecules/SecureNotice';
 import CardForm from '../organisms/CardForm';
 import EwalletForm from '../organisms/EwalletForm';
@@ -235,6 +235,11 @@ export default function CheckoutPage() {
 
   // Card input custom hook state
   const { details: cardDetails, updateField: updateCardField } = useCardForm();
+  const [reviewConfirmed, setReviewConfirmed] = useState(false);
+  const handleCardFieldChange: typeof updateCardField = (field, value) => {
+    setReviewConfirmed(false);
+    updateCardField(field, value);
+  };
 
   // VA & Ewallet selection states
   const [selectedVaMethod, setSelectedVaMethod] = useState('');
@@ -587,7 +592,11 @@ export default function CheckoutPage() {
         attempt.checkoutUrl?.startsWith(VA_PROTOCOL_PREFIX.XENDIT) === true;
 
       return (
-        <div className="flex flex-col gap-5 h-full">
+        <div
+          className={`flex flex-col gap-5 ${
+            isCard && attempt.status === PAYMENT_ATTEMPT_STATUS.AWAITING_TOKEN ? '' : 'h-full'
+          }`}
+        >
           {/* Header Bar with Back Button */}
           <div className="flex items-center justify-between border-b border-lineSoft pb-3">
             <button
@@ -614,11 +623,19 @@ export default function CheckoutPage() {
 
           <div
             ref={panelRef}
-            className="rounded-xl2 border border-lineSoft bg-panel2/30 p-6 flex-1"
+            className={`rounded-xl2 border border-lineSoft bg-panel2/30 p-6 ${
+              isCard && attempt.status === PAYMENT_ATTEMPT_STATUS.AWAITING_TOKEN ? '' : 'flex-1'
+            }`}
           >
             {(() => {
               if (isCard && attempt.status === PAYMENT_ATTEMPT_STATUS.AWAITING_TOKEN) {
-                return <CardForm details={cardDetails} onUpdateField={updateCardField} />;
+                return (
+                  <CardForm
+                    details={cardDetails}
+                    onUpdateField={handleCardFieldChange}
+                    hidePreview={reviewConfirmed}
+                  />
+                );
               }
               if (hasVaProtocol) {
                 return <VirtualAccountForm paymentAttempt={attempt} />;
@@ -645,14 +662,24 @@ export default function CheckoutPage() {
                 title="Secure payment"
                 subtitle="Your card details are tokenized client-side directly with the gateway."
               />
-              <PaymentFooter
-                label={
-                  submitting
-                    ? 'Processing...'
-                    : `Pay ${formatCurrency(session.amount, session.currency)}`
-                }
-                onSubmit={validateAndSubmitCard}
-              />
+              {isCardFormComplete(cardDetails) &&
+                (reviewConfirmed ? (
+                  <PaymentFooter
+                    label={
+                      submitting
+                        ? 'Processing...'
+                        : `Pay ${formatCurrency(session.amount, session.currency)}`
+                    }
+                    onSubmit={validateAndSubmitCard}
+                  />
+                ) : (
+                  <PaymentFooter
+                    label="Review Order"
+                    onSubmit={() => {
+                      setReviewConfirmed(true);
+                    }}
+                  />
+                ))}
             </>
           ) : (
             <SecureNotice
@@ -704,7 +731,9 @@ export default function CheckoutPage() {
       };
 
       return (
-        <div className="flex flex-col gap-5 h-full">
+        <div
+          className={`flex flex-col gap-5 ${method === PAYMENT_METHOD_TAB.CARD ? '' : 'h-full'}`}
+        >
           {/* Show "Back to active payment details" if they have an active attempt and are overriding selection */}
           {session.paymentAttempt && overrideSelection && (
             <div className="flex items-center border-b border-lineSoft pb-3">
@@ -734,10 +763,16 @@ export default function CheckoutPage() {
 
           <div
             ref={panelRef}
-            className="rounded-xl2 border border-lineSoft bg-panel2/30 p-6 flex-1"
+            className={`rounded-xl2 border border-lineSoft bg-panel2/30 p-6 ${
+              method === PAYMENT_METHOD_TAB.CARD ? '' : 'flex-1'
+            }`}
           >
             {method === PAYMENT_METHOD_TAB.CARD && (
-              <CardForm details={cardDetails} onUpdateField={updateCardField} />
+              <CardForm
+                details={cardDetails}
+                onUpdateField={handleCardFieldChange}
+                hidePreview={reviewConfirmed}
+              />
             )}
             {method === PAYMENT_METHOD_TAB.VA && (
               <VirtualAccountForm
@@ -755,10 +790,27 @@ export default function CheckoutPage() {
             )}
           </div>
           <SecureNotice {...notices[method]} />
-          <PaymentFooter
-            label={submitting ? 'Processing...' : labels[method]}
-            onSubmit={submitSelectedMethod}
-          />
+          {method === PAYMENT_METHOD_TAB.CARD ? (
+            isCardFormComplete(cardDetails) &&
+            (reviewConfirmed ? (
+              <PaymentFooter
+                label={submitting ? 'Processing...' : labels[method]}
+                onSubmit={submitSelectedMethod}
+              />
+            ) : (
+              <PaymentFooter
+                label="Review Order"
+                onSubmit={() => {
+                  setReviewConfirmed(true);
+                }}
+              />
+            ))
+          ) : (
+            <PaymentFooter
+              label={submitting ? 'Processing...' : labels[method]}
+              onSubmit={submitSelectedMethod}
+            />
+          )}
         </div>
       );
     }
@@ -766,9 +818,19 @@ export default function CheckoutPage() {
     return null;
   };
 
+  const { number, firstName, lastName, expiry, cvv } = cardDetails;
+  const hideOrderSummary =
+    method === PAYMENT_METHOD_TAB.CARD &&
+    Boolean(number || firstName || lastName || expiry || cvv) &&
+    !reviewConfirmed;
+
   return (
     <div ref={cardRef}>
-      <CheckoutTemplate left={<OrderSummaryPanel session={session} />} right={renderRightSide()} />
+      <CheckoutTemplate
+        left={<OrderSummaryPanel session={session} />}
+        right={renderRightSide()}
+        hideLeft={hideOrderSummary}
+      />
     </div>
   );
 }

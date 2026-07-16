@@ -2,12 +2,16 @@ import type { InputHTMLAttributes } from 'react';
 
 import { forwardRef, useId } from 'react';
 
+import TracedBorder from './TracedBorder';
+
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;
+  /** 0 to 1 — how much of the field's expected length is filled in. */
+  progress?: number;
 }
 
 const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
-  { label, id, className = '', ...props },
+  { label, id, className = '', progress = 0, ...props },
   ref,
 ) {
   const generatedId = useId();
@@ -19,12 +23,15 @@ const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
           {label}
         </label>
       )}
-      <input
-        ref={ref}
-        id={inputId}
-        className={`w-full bg-panel2 border border-lineSoft rounded-xl px-4 py-3 text-sm text-text placeholder:text-muted/60 outline-none transition-colors duration-150 focus:border-brand/60 ${className}`}
-        {...props}
-      />
+      <div className="relative">
+        <input
+          ref={ref}
+          id={inputId}
+          className={`w-full bg-panel2 border border-transparent rounded-xl px-4 py-3 text-sm text-text placeholder:text-muted/60 outline-none transition-colors duration-150 ${className}`}
+          {...props}
+        />
+        <TracedBorder progress={progress} />
+      </div>
     </div>
   );
 });
