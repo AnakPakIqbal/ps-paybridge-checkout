@@ -338,7 +338,7 @@ export default function CheckoutPage() {
     eventSource.onmessage = (event: MessageEvent<string>) => {
       try {
         const data = JSON.parse(event.data) as CheckoutSession;
-        setSession(data);
+        setSession((prev) => (prev ? { ...prev, ...data } : data));
         if (data.checkoutToken) {
           setToken(data.checkoutToken);
         }
