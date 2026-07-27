@@ -1,11 +1,11 @@
 import gsap from 'gsap';
 import { useEffect, useRef, useState } from 'react';
 
-import type { CardDetails } from '../hooks/useCardForm';
+import type { CardDetails } from '../../../hooks/useCardForm';
 
-import Input from '../atoms/Input';
-import VirtualCard from '../molecules/VirtualCard';
-import { getCardBrand } from '../utils/cardBrand';
+import Input from '../../../atoms/Input';
+import VirtualCard from '../../../molecules/VirtualCard';
+import { getCardBrand } from '../../../utils/cardBrand';
 
 function formatCardNumber(value: string) {
   const digits = value.replace(/\D/g, '').slice(0, 16);
@@ -18,7 +18,7 @@ function formatExpiry(value: string) {
   return digits;
 }
 
-interface CardFormProps {
+interface MidtransCardFormProps {
   details: CardDetails;
   onUpdateField: <TField extends keyof CardDetails>(
     field: TField,
@@ -29,11 +29,11 @@ interface CardFormProps {
 
 type FocusedField = keyof CardDetails | null;
 
-export default function CardForm({
+export default function MidtransCardForm({
   details,
   onUpdateField,
   hidePreview = false,
-}: Readonly<CardFormProps>) {
+}: Readonly<MidtransCardFormProps>) {
   const { number, firstName, lastName, expiry, cvv } = details;
   const cardPreviewRef = useRef<HTMLDivElement>(null);
   const [focusedField, setFocusedField] = useState<FocusedField>(null);

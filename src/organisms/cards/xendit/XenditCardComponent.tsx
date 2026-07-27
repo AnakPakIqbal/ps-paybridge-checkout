@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
-import { loadScript } from '../utils/loadScript';
+import { loadScript } from '../../../utils/loadScript';
 
 // Pinned to the latest published xendit-components-web version as of this writing
 // (npm view xendit-components-web versions). Verified reachable via curl — the CDN

@@ -13,13 +13,13 @@ import { icons } from '../atoms/icons';
 import StatusIcon from '../atoms/StatusIcon';
 import { isCardFormComplete, useCardForm } from '../hooks/useCardForm';
 import SecureNotice from '../molecules/SecureNotice';
-import CardForm from '../organisms/CardForm';
+import MidtransCardForm from '../organisms/cards/midtrans/MidtransCardForm';
+import XenditCardComponent from '../organisms/cards/xendit/XenditCardComponent';
 import EwalletForm from '../organisms/EwalletForm';
 import OrderSummaryPanel from '../organisms/OrderSummaryPanel';
 import PaymentFooter from '../organisms/PaymentFooter';
 import PaymentMethodTabs from '../organisms/PaymentMethodTabs';
 import VirtualAccountForm from '../organisms/VirtualAccountForm';
-import XenditCardComponent from '../organisms/XenditCardComponent';
 import {
   fetchCheckoutSession,
   openCheckoutEventStream,
@@ -686,7 +686,7 @@ export default function CheckoutPage() {
               }
               if (isAwaitingCardInput) {
                 return (
-                  <CardForm
+                  <MidtransCardForm
                     details={cardDetails}
                     onUpdateField={handleCardFieldChange}
                     hidePreview={reviewConfirmed}
@@ -838,7 +838,7 @@ export default function CheckoutPage() {
                   </div>
                 )}
                 {method === PAYMENT_METHOD_TAB.CARD && session.provider !== PSP_PROVIDER.XENDIT && (
-                  <CardForm
+                  <MidtransCardForm
                     details={cardDetails}
                     onUpdateField={handleCardFieldChange}
                     hidePreview={reviewConfirmed}
