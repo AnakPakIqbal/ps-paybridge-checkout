@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { getCardBrand } from '../molecules/VirtualCard';
+import { getCardBrand } from '../utils/cardBrand';
 
 export interface CardDetails {
   number: string;

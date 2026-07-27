@@ -10,19 +10,20 @@ interface TracedBorderProps {
 export default function TracedBorder({ progress, className = '' }: Readonly<TracedBorderProps>) {
   const rectRef = useRef<SVGRectElement>(null);
   const progressRef = useRef(progress);
-  progressRef.current = progress;
 
-  const snapToCurrentSize = () => {
-    const rect = rectRef.current;
-    if (!rect) return;
-    const length = rect.getTotalLength();
-    const clamped = Math.max(0, Math.min(1, progressRef.current));
-    gsap.set(rect, { strokeDasharray: length, strokeDashoffset: length * (1 - clamped) });
-  };
+  useEffect(() => {
+    progressRef.current = progress;
+  }, [progress]);
 
   useEffect(() => {
     const rect = rectRef.current;
     if (!rect) return;
+
+    const snapToCurrentSize = () => {
+      const length = rect.getTotalLength();
+      const clamped = Math.max(0, Math.min(1, progressRef.current));
+      gsap.set(rect, { strokeDasharray: length, strokeDashoffset: length * (1 - clamped) });
+    };
 
     snapToCurrentSize();
 
@@ -32,7 +33,6 @@ export default function TracedBorder({ progress, className = '' }: Readonly<Trac
     return () => {
       resizeObserver.disconnect();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {

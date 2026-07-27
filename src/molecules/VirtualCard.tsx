@@ -8,7 +8,9 @@ import {
   VisaLogoIcon,
 } from 'react-svg-credit-card-payment-icons';
 
-export type CardBrand = 'visa' | 'mastercard' | 'jcb' | 'amex' | 'generic';
+import type { CardBrand } from '../utils/cardBrand';
+
+import { getCardBrand } from '../utils/cardBrand';
 
 function CardChip() {
   return (
@@ -47,15 +49,6 @@ function BrandLogo({ brand }: Readonly<{ brand: CardBrand }>) {
   if (brand === 'jcb') return <JCBLogoIcon width={36} />;
   if (brand === 'amex') return <AmexIcon width={36} />;
   return <GenericLogoIcon width={36} />;
-}
-
-export function getCardBrand(num: string): CardBrand {
-  const clean = (num || '').replace(/\s/g, '');
-  if (clean.startsWith('4')) return 'visa';
-  if (clean.startsWith('5') || clean.startsWith('2')) return 'mastercard';
-  if (clean.startsWith('35')) return 'jcb';
-  if (clean.startsWith('34') || clean.startsWith('37')) return 'amex';
-  return 'generic';
 }
 
 const SIDE_STYLE: CSSProperties = {

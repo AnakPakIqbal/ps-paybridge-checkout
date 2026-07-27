@@ -1,5 +1,5 @@
 import gsap from 'gsap';
-import { CheckCircle2, XCircle, Clock, AlertTriangle, ArrowLeft } from 'lucide-react';
+import { AlertTriangle, ArrowLeft } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 import type {
@@ -10,6 +10,7 @@ import type {
 } from '../types/checkout';
 
 import { icons } from '../atoms/icons';
+import StatusIcon from '../atoms/StatusIcon';
 import { isCardFormComplete, useCardForm } from '../hooks/useCardForm';
 import SecureNotice from '../molecules/SecureNotice';
 import CardForm from '../organisms/CardForm';
@@ -18,9 +19,11 @@ import OrderSummaryPanel from '../organisms/OrderSummaryPanel';
 import PaymentFooter from '../organisms/PaymentFooter';
 import PaymentMethodTabs from '../organisms/PaymentMethodTabs';
 import VirtualAccountForm from '../organisms/VirtualAccountForm';
+import XenditCardComponent from '../organisms/XenditCardComponent';
 import {
   fetchCheckoutSession,
   openCheckoutEventStream,
+  resolveCheckoutSession,
   selectCheckoutMethod,
   submitCardToken,
 } from '../services/checkoutApi';
@@ -35,10 +38,17 @@ import {
   VA_PROTOCOL_PREFIX,
 } from '../types/checkout';
 import { formatCurrency } from '../utils/formatCurrency';
+import { loadScript } from '../utils/loadScript';
+
+const PROCESSING_LABEL = 'Processing...';
 
 declare global {
   interface Window {
     MIDTRANS_CLIENT_KEY?: string;
+    // Set server-side from our own NODE_ENV — not sniffed from the client key's string
+    // prefix, since some Midtrans accounts issue sandbox keys without an "SB-Mid-"
+    // prefix (confirmed against this project's Midtrans dashboard).
+    MIDTRANS_ENVIRONMENT?: 'sandbox' | 'production';
     MidtransNew3ds?: {
       getCardToken: (
         cardData: Record<string, string>,
@@ -49,30 +59,6 @@ declare global {
       ) => void;
     };
   }
-}
-
-// Helper function to dynamically load JS script SDKs
-function loadScript(id: string, src: string, attributes: Record<string, string> = {}) {
-  return new Promise<void>((resolve, reject) => {
-    if (document.getElementById(id)) {
-      resolve();
-      return;
-    }
-    const script = document.createElement('script');
-    script.id = id;
-    script.src = src;
-    script.async = true;
-    Object.entries(attributes).forEach(([key, val]) => {
-      script.setAttribute(key, val);
-    });
-    script.onload = () => {
-      resolve();
-    };
-    script.onerror = () => {
-      reject(new Error(`Failed to load script: ${src}`));
-    };
-    document.body.appendChild(script);
-  });
 }
 
 interface InitialMethodSelection {
@@ -112,15 +98,70 @@ function deriveInitialMethodSelection(
   );
 
   let tab: PaymentMethodTabId | null = null;
-  if (hasCard) tab = PAYMENT_METHOD_TAB.CARD;
-  else if (hasVa) tab = PAYMENT_METHOD_TAB.VA;
+  if (hasVa) tab = PAYMENT_METHOD_TAB.VA;
   else if (hasEwallet) tab = PAYMENT_METHOD_TAB.EWALLET;
+  else if (hasCard) tab = PAYMENT_METHOD_TAB.CARD;
 
   return {
     vaMethodCode: firstVaMethod?.code ?? null,
     ewalletMethodCode: firstWalletMethod?.code ?? null,
     tab,
   };
+}
+
+// Tokenize card and complete card charge flow. Returns the PSP token string,
+// or null when the provider (Xendit) needs raw card details instead of a token.
+// Module scope: closes over no component state, only its own params/imports.
+async function tokenizeCard(
+  provider: PspProvider,
+  cardDetailsObj: CardTokenDetails,
+): Promise<string | null> {
+  const { number, cvv, expiryMonth, expiryYear } = cardDetailsObj;
+
+  if (provider === PSP_PROVIDER.MIDTRANS) {
+    const clientKey = window.MIDTRANS_CLIENT_KEY ?? '';
+    const environment = window.MIDTRANS_ENVIRONMENT ?? 'sandbox';
+
+    await loadScript(
+      'midtrans-script',
+      'https://api.midtrans.com/v2/assets/js/midtrans-new-3ds.min.js',
+      {
+        'data-environment': environment,
+        'data-client-key': clientKey,
+      },
+    );
+
+    const midtransSdk = window.MidtransNew3ds;
+    if (!midtransSdk) {
+      throw new Error('Midtrans card SDK failed to load.');
+    }
+
+    return new Promise<string>((resolve, reject) => {
+      const cardData = {
+        card_number: number.replace(/\s/g, ''),
+        card_cvv: cvv,
+        card_exp_month: expiryMonth,
+        card_exp_year: expiryYear,
+      };
+
+      midtransSdk.getCardToken(cardData, {
+        onSuccess: (response) => {
+          if (response.token_id) {
+            resolve(response.token_id);
+          } else {
+            reject(new Error('Card tokenization succeeded but no token ID was returned.'));
+          }
+        },
+        onFailure: (response) => {
+          reject(new Error(response.status_message ?? 'Midtrans card tokenization failed.'));
+        },
+      });
+    });
+  }
+  // Xendit V3 uses Full PAN: raw card details go to the backend
+  // which sends them directly to Xendit's /v3/payment_requests.
+  // No client-side tokenization SDK is needed.
+  return null;
 }
 
 function SkeletonLoader() {
@@ -149,8 +190,8 @@ interface ErrorBannerProps {
 function PaidView({ session }: Readonly<{ session: CheckoutSession }>) {
   return (
     <div className="flex flex-col items-center justify-center h-full text-center py-10 max-w-sm mx-auto">
-      <div className="w-20 h-20 bg-brandDim/80 border border-brand/35 rounded-full flex items-center justify-center text-brand mb-6 shadow-xl shadow-brand/10 animate-bounce">
-        <CheckCircle2 size={44} />
+      <div className="w-20 h-20 bg-brandDim/80 border border-brand/35 rounded-full flex items-center justify-center mb-6 shadow-xl shadow-brand/10">
+        <StatusIcon variant="success" />
       </div>
       <h2 className="text-2xl font-bold text-text mb-2">Payment Successful</h2>
       <p className="text-sm text-muted mb-6 leading-relaxed">
@@ -175,8 +216,8 @@ function PaidView({ session }: Readonly<{ session: CheckoutSession }>) {
 function FailedView() {
   return (
     <div className="flex flex-col items-center justify-center h-full text-center py-10 max-w-sm mx-auto">
-      <div className="w-20 h-20 bg-red-500/10 border border-red-500/20 rounded-full flex items-center justify-center text-red-500 mb-6 shadow-xl shadow-red-500/5">
-        <XCircle size={44} />
+      <div className="w-20 h-20 bg-red-500/10 border border-red-500/20 rounded-full flex items-center justify-center mb-6 shadow-xl shadow-red-500/5">
+        <StatusIcon variant="failed" />
       </div>
       <h2 className="text-2xl font-bold text-text mb-2">Payment Failed</h2>
       <p className="text-sm text-muted mb-6 leading-relaxed">
@@ -190,8 +231,8 @@ function FailedView() {
 function ExpiredView() {
   return (
     <div className="flex flex-col items-center justify-center h-full text-center py-10 max-w-sm mx-auto">
-      <div className="w-20 h-20 bg-yellow-500/10 border border-yellow-500/20 rounded-full flex items-center justify-center text-yellow-500 mb-6 shadow-xl shadow-yellow-500/5">
-        <Clock size={44} />
+      <div className="w-20 h-20 bg-yellow-500/10 border border-yellow-500/20 rounded-full flex items-center justify-center mb-6 shadow-xl shadow-yellow-500/5">
+        <StatusIcon variant="expired" />
       </div>
       <h2 className="text-2xl font-bold text-text mb-2">Payment Expired</h2>
       <p className="text-sm text-muted mb-6 leading-relaxed">
@@ -224,7 +265,15 @@ function ErrorBanner({ message, onClose }: Readonly<ErrorBannerProps>) {
 }
 
 export default function CheckoutPage() {
+  // sessionId/token never render directly (only read inside handlers/effects as call
+  // args), so react-doctor flags them as re-render waste and suggests refs instead.
+  // Converting to refs here would require re-auditing every read site (~15 across the
+  // fetch/SSE/submit flows below) for stale-closure correctness in payment-critical
+  // code — not worth the risk for a re-render optimization. See the similar tradeoff
+  // noted on renderRightSide's cognitive-complexity suppression below.
+  // eslint-disable-next-line react-doctor/rerender-state-only-in-handlers
   const [sessionId, setSessionId] = useState<string | null>(null);
+  // eslint-disable-next-line react-doctor/rerender-state-only-in-handlers
   const [token, setToken] = useState<string | null>(null);
   const [session, setSession] = useState<CheckoutSession | null>(null);
   const [loading, setLoading] = useState(true);
@@ -246,6 +295,12 @@ export default function CheckoutPage() {
   const [selectedEwalletMethod, setSelectedEwalletMethod] = useState('');
 
   const [method, setMethod] = useState<PaymentMethodTabId>(PAYMENT_METHOD_TAB.CARD);
+  // Distinguishes an explicit tab click from the initial default/derived tab — the
+  // Xendit Components auto-session-create effect below must only fire once the
+  // customer has actually chosen Card, not just because it happens to be the
+  // starting tab (that was locking every Xendit session onto Card immediately,
+  // hiding the VA/E-Wallet tabs before the customer could pick them).
+  const [hasUserSelectedMethod, setHasUserSelectedMethod] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
@@ -379,60 +434,27 @@ export default function CheckoutPage() {
     }
   };
 
-  // Tokenize card and complete card charge flow. Returns the PSP token string,
-  // or null when the provider (Xendit) needs raw card details instead of a token.
-  const tokenizeCard = async (
-    provider: PspProvider,
-    cardDetailsObj: CardTokenDetails,
-  ): Promise<string | null> => {
-    const { number, cvv, expiryMonth, expiryYear } = cardDetailsObj;
-
-    if (provider === PSP_PROVIDER.MIDTRANS) {
-      const clientKey = window.MIDTRANS_CLIENT_KEY ?? '';
-      const isSandbox = clientKey.startsWith('SB-Mid-');
-      const environment = isSandbox ? 'sandbox' : 'production';
-
-      await loadScript(
-        'midtrans-script',
-        'https://api.midtrans.com/v2/assets/js/midtrans-new-3ds.min.js',
-        {
-          'data-environment': environment,
-          'data-client-key': clientKey,
-        },
-      );
-
-      const midtransSdk = window.MidtransNew3ds;
-      if (!midtransSdk) {
-        throw new Error('Midtrans card SDK failed to load.');
-      }
-
-      return new Promise<string>((resolve, reject) => {
-        const cardData = {
-          card_number: number.replace(/\s/g, ''),
-          card_cvv: cvv,
-          card_exp_month: expiryMonth,
-          card_exp_year: expiryYear,
-        };
-
-        midtransSdk.getCardToken(cardData, {
-          onSuccess: (response) => {
-            if (response.token_id) {
-              resolve(response.token_id);
-            } else {
-              reject(new Error('Card tokenization succeeded but no token ID was returned.'));
-            }
-          },
-          onFailure: (response) => {
-            reject(new Error(response.status_message ?? 'Midtrans card tokenization failed.'));
-          },
-        });
-      });
+  // Xendit's card flow uses Components (embedded fields), not our custom CardForm — it
+  // needs a Payment Session created up front to get the components_sdk_key. Auto-trigger
+  // that once the customer has explicitly chosen the Card tab (hasUserSelectedMethod),
+  // rather than waiting for a form submit (there is no form to submit for this path).
+  // Must NOT fire just because Card happens to be the starting tab — that locked every
+  // Xendit session onto Card immediately on load, before the customer could pick
+  // VA/E-Wallet instead.
+  useEffect(() => {
+    if (
+      hasUserSelectedMethod &&
+      (session?.status === SESSION_STATUS.AWAITING_METHOD_SELECTION || overrideSelection) &&
+      method === PAYMENT_METHOD_TAB.CARD &&
+      session?.provider === PSP_PROVIDER.XENDIT &&
+      !submitting
+    ) {
+      void selectPaymentMethod(CARD_PAYMENT_METHOD_CODE.XENDIT_CARDS);
     }
-    // Xendit V3 uses Full PAN: raw card details go to the backend
-    // which sends them directly to Xendit's /v3/payment_requests.
-    // No client-side tokenization SDK is needed.
-    return null;
-  };
+    // Deliberately narrow: only re-run when the tab/session status/provider actually
+    // change — selectPaymentMethod and submitting are not stable/relevant trigger deps here.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [method, session?.status, session?.provider, hasUserSelectedMethod, overrideSelection]);
 
   // Validates the card form and, if valid, submits it via submitCardPayment.
   // Shared by both the "awaiting_token" resubmit flow and the initial method-selection flow.
@@ -544,6 +566,29 @@ export default function CheckoutPage() {
     }
   };
 
+  // Called when Xendit's Components SDK fires `session-complete` client-side — the card
+  // was tokenized/charged directly with Xendit, so we resolve the final outcome from our
+  // backend (which itself queries Xendit) rather than knowing it locally.
+  const resolveXenditSession = async () => {
+    if (!sessionId) return;
+    setSubmitting(true);
+    setFormError(null);
+    try {
+      const resolvedSession = await resolveCheckoutSession(sessionId, token ?? '');
+      setSession(resolvedSession);
+      if (resolvedSession.checkoutToken) {
+        setToken(resolvedSession.checkoutToken);
+      }
+      if (resolvedSession.status === SESSION_STATUS.AWAITING_PAYMENT) {
+        subscribeToSSE(sessionId, resolvedSession.checkoutToken ?? token ?? '');
+      }
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : 'Failed to resolve card payment.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   // Cognitive complexity here is inherent to the payment-status branching (awaiting-payment
   // and method-selection views), which closes over ~10 pieces of component state/callbacks.
   // Splitting those branches into standalone components would require threading that state
@@ -557,8 +602,8 @@ export default function CheckoutPage() {
     if (error) {
       return (
         <div className="flex flex-col items-center justify-center h-full py-16 text-center max-w-sm mx-auto">
-          <div className="w-14 h-14 rounded-full bg-red-500/10 flex items-center justify-center text-red-500 mb-5">
-            <XCircle size={32} />
+          <div className="w-14 h-14 rounded-full bg-red-500/10 flex items-center justify-center mb-5">
+            <StatusIcon variant="failed" size={32} />
           </div>
           <h2 className="text-xl font-bold text-text mb-2">Checkout Error</h2>
           <p className="text-xs text-muted leading-relaxed">{error}</p>
@@ -587,22 +632,22 @@ export default function CheckoutPage() {
       const isCard =
         attempt.paymentMethod === CARD_PAYMENT_METHOD_CODE.MIDTRANS_CREDIT_CARD ||
         attempt.paymentMethod === CARD_PAYMENT_METHOD_CODE.XENDIT_CARDS;
+      const isXenditComponentsCard = isCard && session.provider === PSP_PROVIDER.XENDIT;
+      const isAwaitingCardInput =
+        isCard && attempt.status === PAYMENT_ATTEMPT_STATUS.AWAITING_TOKEN;
       const hasVaProtocol =
         attempt.checkoutUrl?.startsWith(VA_PROTOCOL_PREFIX.MIDTRANS) === true ||
         attempt.checkoutUrl?.startsWith(VA_PROTOCOL_PREFIX.XENDIT) === true;
 
       return (
-        <div
-          className={`flex flex-col gap-5 ${
-            isCard && attempt.status === PAYMENT_ATTEMPT_STATUS.AWAITING_TOKEN ? '' : 'h-full'
-          }`}
-        >
+        <div className={`flex flex-col gap-5 ${isAwaitingCardInput ? '' : 'h-full'}`}>
           {/* Header Bar with Back Button */}
           <div className="flex items-center justify-between border-b border-lineSoft pb-3">
             <button
               type="button"
               onClick={() => {
                 setOverrideSelection(true);
+                setHasUserSelectedMethod(false);
               }}
               className="flex items-center gap-2 text-xs font-semibold text-muted hover:text-text transition-colors duration-150"
             >
@@ -624,11 +669,22 @@ export default function CheckoutPage() {
           <div
             ref={panelRef}
             className={`rounded-xl2 border border-lineSoft bg-panel2/30 p-6 ${
-              isCard && attempt.status === PAYMENT_ATTEMPT_STATUS.AWAITING_TOKEN ? '' : 'flex-1'
+              isAwaitingCardInput ? '' : 'flex-1'
             }`}
           >
             {(() => {
-              if (isCard && attempt.status === PAYMENT_ATTEMPT_STATUS.AWAITING_TOKEN) {
+              if (isAwaitingCardInput && isXenditComponentsCard && attempt.componentsSdkKey) {
+                return (
+                  <XenditCardComponent
+                    componentsSdkKey={attempt.componentsSdkKey}
+                    onComplete={() => {
+                      void resolveXenditSession();
+                    }}
+                    onError={setFormError}
+                  />
+                );
+              }
+              if (isAwaitingCardInput) {
                 return (
                   <CardForm
                     details={cardDetails}
@@ -643,7 +699,9 @@ export default function CheckoutPage() {
               if (isCard) {
                 return (
                   <div className="flex flex-col items-center justify-center py-16 text-center h-full max-w-xs mx-auto">
-                    <div className="w-12 h-12 rounded-full border-4 border-brand border-t-transparent animate-spin mb-4" />
+                    <div className="mb-4">
+                      <StatusIcon variant="waiting" size={48} />
+                    </div>
                     <p className="text-sm font-semibold text-text mb-2">Processing Card Payment</p>
                     <p className="text-xs text-muted leading-relaxed">
                       Confirming with your bank. Please do not close or refresh this tab.
@@ -656,7 +714,13 @@ export default function CheckoutPage() {
           </div>
 
           {/* Conditional Secure Notice & Footer */}
-          {isCard && attempt.status === PAYMENT_ATTEMPT_STATUS.AWAITING_TOKEN ? (
+          {isAwaitingCardInput && isXenditComponentsCard && (
+            <SecureNotice
+              title="Secure payment"
+              subtitle="Card details are entered directly into Xendit's secure fields and never touch PayBridge."
+            />
+          )}
+          {isAwaitingCardInput && !isXenditComponentsCard && (
             <>
               <SecureNotice
                 title="Secure payment"
@@ -667,7 +731,7 @@ export default function CheckoutPage() {
                   <PaymentFooter
                     label={
                       submitting
-                        ? 'Processing...'
+                        ? PROCESSING_LABEL
                         : `Pay ${formatCurrency(session.amount, session.currency)}`
                     }
                     onSubmit={validateAndSubmitCard}
@@ -681,7 +745,8 @@ export default function CheckoutPage() {
                   />
                 ))}
             </>
-          ) : (
+          )}
+          {!isAwaitingCardInput && (
             <SecureNotice
               title="Waiting for confirmation"
               subtitle="We will automatically refresh as soon as payment is confirmed."
@@ -703,11 +768,11 @@ export default function CheckoutPage() {
         availableCategories.has(PAYMENT_METHOD_CATEGORY.QR_CODE);
 
       const tabs: { id: PaymentMethodTabId; label: string; icon: string }[] = [];
-      if (hasCard) tabs.push({ id: PAYMENT_METHOD_TAB.CARD, label: 'Card', icon: icons.card });
       if (hasVa)
         tabs.push({ id: PAYMENT_METHOD_TAB.VA, label: 'Virtual Account', icon: icons.bank });
       if (hasEwallet)
         tabs.push({ id: PAYMENT_METHOD_TAB.EWALLET, label: 'E-Wallet', icon: icons.wallet });
+      if (hasCard) tabs.push({ id: PAYMENT_METHOD_TAB.CARD, label: 'Card', icon: icons.card });
 
       const labels: Record<PaymentMethodTabId, string> = {
         [PAYMENT_METHOD_TAB.CARD]: `Pay ${formatCurrency(session.amount, session.currency)}`,
@@ -732,84 +797,96 @@ export default function CheckoutPage() {
 
       return (
         <div
-          className={`flex flex-col gap-5 ${method === PAYMENT_METHOD_TAB.CARD ? '' : 'h-full'}`}
+          className={`flex flex-col gap-5 ${
+            hasUserSelectedMethod && method === PAYMENT_METHOD_TAB.CARD ? '' : 'h-full'
+          } ${hasUserSelectedMethod ? '' : 'items-center justify-center max-w-md mx-auto w-full'}`}
         >
-          {/* Show "Back to active payment details" if they have an active attempt and are overriding selection */}
-          {session.paymentAttempt && overrideSelection && (
-            <div className="flex items-center border-b border-lineSoft pb-3">
-              <button
-                type="button"
-                onClick={() => {
-                  setOverrideSelection(false);
+          {tabs.length > 0 && (
+            <div className="w-full">
+              <PaymentMethodTabs
+                active={hasUserSelectedMethod ? method : null}
+                onChange={(nextMethod) => {
+                  setHasUserSelectedMethod(true);
+                  setMethod(nextMethod);
                 }}
-                className="flex items-center gap-2 text-xs font-semibold text-muted hover:text-text transition-colors duration-150"
-              >
-                <ArrowLeft size={14} />
-                Back to active payment details
-              </button>
+                tabs={tabs}
+              />
             </div>
           )}
 
-          {tabs.length > 0 && (
-            <PaymentMethodTabs active={method} onChange={setMethod} tabs={tabs} />
-          )}
-
-          <ErrorBanner
-            message={formError}
-            onClose={() => {
-              setFormError(null);
-            }}
-          />
-
-          <div
-            ref={panelRef}
-            className={`rounded-xl2 border border-lineSoft bg-panel2/30 p-6 ${
-              method === PAYMENT_METHOD_TAB.CARD ? '' : 'flex-1'
-            }`}
-          >
-            {method === PAYMENT_METHOD_TAB.CARD && (
-              <CardForm
-                details={cardDetails}
-                onUpdateField={handleCardFieldChange}
-                hidePreview={reviewConfirmed}
-              />
-            )}
-            {method === PAYMENT_METHOD_TAB.VA && (
-              <VirtualAccountForm
-                availableMethods={session.availableMethods ?? []}
-                selectedMethod={selectedVaMethod}
-                setSelectedMethod={setSelectedVaMethod}
-              />
-            )}
-            {method === PAYMENT_METHOD_TAB.EWALLET && (
-              <EwalletForm
-                availableMethods={session.availableMethods ?? []}
-                selectedMethod={selectedEwalletMethod}
-                setSelectedMethod={setSelectedEwalletMethod}
-              />
-            )}
-          </div>
-          <SecureNotice {...notices[method]} />
-          {method === PAYMENT_METHOD_TAB.CARD ? (
-            isCardFormComplete(cardDetails) &&
-            (reviewConfirmed ? (
-              <PaymentFooter
-                label={submitting ? 'Processing...' : labels[method]}
-                onSubmit={submitSelectedMethod}
-              />
-            ) : (
-              <PaymentFooter
-                label="Review Order"
-                onSubmit={() => {
-                  setReviewConfirmed(true);
+          {hasUserSelectedMethod && (
+            <div className="w-full flex flex-col gap-5">
+              <ErrorBanner
+                message={formError}
+                onClose={() => {
+                  setFormError(null);
                 }}
               />
-            ))
-          ) : (
-            <PaymentFooter
-              label={submitting ? 'Processing...' : labels[method]}
-              onSubmit={submitSelectedMethod}
-            />
+
+              <div
+                ref={panelRef}
+                className={`rounded-xl2 border border-lineSoft bg-panel2/30 p-6 ${
+                  method === PAYMENT_METHOD_TAB.CARD ? '' : 'flex-1'
+                }`}
+              >
+                {method === PAYMENT_METHOD_TAB.CARD && session.provider === PSP_PROVIDER.XENDIT && (
+                  <div className="flex flex-col items-center justify-center py-16 text-center max-w-xs mx-auto">
+                    <div className="mb-4">
+                      <StatusIcon variant="waiting" size={48} />
+                    </div>
+                    <p className="text-sm font-semibold text-text">Preparing secure card form...</p>
+                  </div>
+                )}
+                {method === PAYMENT_METHOD_TAB.CARD && session.provider !== PSP_PROVIDER.XENDIT && (
+                  <CardForm
+                    details={cardDetails}
+                    onUpdateField={handleCardFieldChange}
+                    hidePreview={reviewConfirmed}
+                  />
+                )}
+                {method === PAYMENT_METHOD_TAB.VA && (
+                  <VirtualAccountForm
+                    availableMethods={session.availableMethods ?? []}
+                    selectedMethod={selectedVaMethod}
+                    setSelectedMethod={setSelectedVaMethod}
+                  />
+                )}
+                {method === PAYMENT_METHOD_TAB.EWALLET && (
+                  <EwalletForm
+                    availableMethods={session.availableMethods ?? []}
+                    selectedMethod={selectedEwalletMethod}
+                    setSelectedMethod={setSelectedEwalletMethod}
+                  />
+                )}
+              </div>
+              <SecureNotice {...notices[method]} />
+              {method === PAYMENT_METHOD_TAB.CARD && session.provider === PSP_PROVIDER.XENDIT
+                ? null // XenditCardComponent (rendered once the session is created) owns its own submit button.
+                : method === PAYMENT_METHOD_TAB.CARD && (
+                    <>
+                      {isCardFormComplete(cardDetails) &&
+                        (reviewConfirmed ? (
+                          <PaymentFooter
+                            label={submitting ? PROCESSING_LABEL : labels[method]}
+                            onSubmit={submitSelectedMethod}
+                          />
+                        ) : (
+                          <PaymentFooter
+                            label="Review Order"
+                            onSubmit={() => {
+                              setReviewConfirmed(true);
+                            }}
+                          />
+                        ))}
+                    </>
+                  )}
+              {method !== PAYMENT_METHOD_TAB.CARD && (
+                <PaymentFooter
+                  label={submitting ? PROCESSING_LABEL : labels[method]}
+                  onSubmit={submitSelectedMethod}
+                />
+              )}
+            </div>
           )}
         </div>
       );

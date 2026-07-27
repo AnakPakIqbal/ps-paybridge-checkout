@@ -4,7 +4,8 @@ import { useEffect, useRef, useState } from 'react';
 import type { CardDetails } from '../hooks/useCardForm';
 
 import Input from '../atoms/Input';
-import VirtualCard, { getCardBrand } from '../molecules/VirtualCard';
+import VirtualCard from '../molecules/VirtualCard';
+import { getCardBrand } from '../utils/cardBrand';
 
 function formatCardNumber(value: string) {
   const digits = value.replace(/\D/g, '').slice(0, 16);
@@ -46,7 +47,8 @@ export default function CardForm({
   const fullName = [firstName, lastName].filter(Boolean).join(' ');
   const cvvLength = getCardBrand(number) === 'amex' ? 4 : 3;
 
-  const hasStartedTyping = !hidePreview && Boolean(number || firstName || lastName || expiry || cvv);
+  const hasStartedTyping =
+    !hidePreview && Boolean(number || firstName || lastName || expiry || cvv);
 
   // 3D slide, spin and scale entry animation on typing start, hide on empty
   useEffect(() => {

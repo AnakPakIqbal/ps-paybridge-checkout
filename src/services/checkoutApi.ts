@@ -54,6 +54,15 @@ export function submitCardToken(
   }).then((res) => requestSession(res, 'Failed to complete credit card transaction.'));
 }
 
+export function resolveCheckoutSession(sessionId: string, token: string): Promise<CheckoutSession> {
+  return fetch(`/checkout/${sessionId}/resolve-session`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  }).then((res) => requestSession(res, 'Failed to resolve the Xendit card session.'));
+}
+
 export function openCheckoutEventStream(sessionId: string, token: string): EventSource {
   return new EventSource(`/checkout/${sessionId}/events?token=${encodeURIComponent(token)}`);
 }

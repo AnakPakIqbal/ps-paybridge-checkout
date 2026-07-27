@@ -19,17 +19,17 @@ export default function EwalletForm({
   paymentAttempt = null,
 }: Readonly<EwalletFormProps>) {
   if (paymentAttempt) {
-    const methodLower = (paymentAttempt.paymentMethod ?? '').toLowerCase();
-    const isQris =
-      methodLower.includes('qris') || methodLower.includes('qr_code') || methodLower.includes('qr');
+    const checkoutUrl = paymentAttempt.checkoutUrl ?? '';
+    // Midtrans's own QR endpoint (GoPay's and QRIS's "generate-qr-code" action) already
+    // returns a scannable QR *image* at a path like ".../qr-code" — no file extension, so
+    // it doesn't match a simple .png/.jpg check. Use that image directly; don't re-encode
+    // its URL as text through a third-party QR generator, which just produces a QR that
+    // points back at the image instead of showing the actual payment QR.
+    const isMidtransQrEndpoint = /\/qr-code(?:$|[/?])/i.test(checkoutUrl);
+    const isImageUrl = /\.(png|jpg|jpeg|gif)(?:$|\?)/i.test(checkoutUrl);
+    const isQris = isMidtransQrEndpoint || isImageUrl;
 
-    // Determine if we should generate a QR code image
-    let qrUrl: string | null = null;
-    if (isQris && paymentAttempt.checkoutUrl) {
-      qrUrl = /\.(png|jpg|jpeg|gif)/i.test(paymentAttempt.checkoutUrl)
-        ? paymentAttempt.checkoutUrl
-        : `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(paymentAttempt.checkoutUrl)}`;
-    }
+    const qrUrl = isQris && checkoutUrl ? checkoutUrl : null;
 
     return (
       <div className="flex flex-col items-center justify-center p-2 text-center h-full">
@@ -38,7 +38,7 @@ export default function EwalletForm({
             <div className="w-12 h-12 rounded-full bg-brand/10 text-brand flex items-center justify-center mb-3">
               <QrCode size={24} />
             </div>
-            <h2 className="text-base font-semibold text-text mb-1">Scan QRIS Code</h2>
+            <h2 className="text-base font-semibold text-text mb-1">Scan QR Code</h2>
             <p className="text-xs text-muted mb-5">
               Scan the QR code below using GoPay, OVO, ShopeePay, or your banking app.
             </p>
@@ -51,7 +51,7 @@ export default function EwalletForm({
               <div className="absolute bottom-2 right-2 w-4 h-4 border-b-2 border-r-2 border-brand/40" />
               <img
                 src={qrUrl}
-                alt="QRIS QR Code"
+                alt="Payment QR Code"
                 className="w-48 h-48 sm:w-52 sm:h-52 relative z-10"
               />
             </div>

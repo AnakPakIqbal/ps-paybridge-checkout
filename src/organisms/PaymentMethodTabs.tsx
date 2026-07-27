@@ -17,7 +17,7 @@ const defaultTabs: TabDefinition[] = [
 ];
 
 interface PaymentMethodTabsProps {
-  active: PaymentMethodTabId;
+  active: PaymentMethodTabId | null;
   onChange: (id: PaymentMethodTabId) => void;
   tabs?: TabDefinition[];
 }
@@ -29,7 +29,7 @@ export default function PaymentMethodTabs({
 }: Readonly<PaymentMethodTabsProps>) {
   return (
     <div>
-      <h1 className="text-base font-semibold text-text mb-4">Choose payment method</h1>
+      <h1 className="text-base font-semibold text-text mb-4 text-center">Choose payment method</h1>
       <div className="flex gap-3" id="payment-tabs">
         {tabs.map((tab) => (
           <PaymentTab

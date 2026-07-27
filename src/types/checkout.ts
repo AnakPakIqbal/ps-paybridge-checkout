@@ -5,7 +5,7 @@ export const PAYMENT_METHOD_CATEGORY = {
   QR_CODE: 'qr_code',
 } as const;
 
-export type PaymentMethodCategory =
+type PaymentMethodCategory =
   (typeof PAYMENT_METHOD_CATEGORY)[keyof typeof PAYMENT_METHOD_CATEGORY];
 
 // The three tabs shown in the checkout UI — a UI-level grouping distinct from
@@ -32,14 +32,11 @@ export const SESSION_STATUS = {
   EXPIRED: 'expired',
 } as const;
 
-export type SessionStatus = (typeof SESSION_STATUS)[keyof typeof SESSION_STATUS];
+type SessionStatus = (typeof SESSION_STATUS)[keyof typeof SESSION_STATUS];
 
 export const PAYMENT_ATTEMPT_STATUS = {
   AWAITING_TOKEN: 'awaiting_token',
 } as const;
-
-export type PaymentAttemptStatus =
-  (typeof PAYMENT_ATTEMPT_STATUS)[keyof typeof PAYMENT_ATTEMPT_STATUS];
 
 export const PSP_PROVIDER = {
   MIDTRANS: 'midtrans',
@@ -62,6 +59,9 @@ export interface PaymentAttempt {
   status: string;
   paymentMethod?: string;
   checkoutUrl?: string;
+  // Only populated for a Xendit Components card attempt — the session-scoped key used
+  // to initialize the Xendit Components SDK client-side.
+  componentsSdkKey?: string;
 }
 
 export interface CheckoutSession {

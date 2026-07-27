@@ -12,6 +12,7 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "deadcode": "knip",
     "audit:duplication": "jscpd src",
     "doctor": "npx react-doctor@latest"
   },
@@ -39,6 +40,7 @@
     "eslint-plugin-sonarjs": "^4.2.0",
     "globals": "^17.7.0",
     "jscpd": "^5.0.12",
+    "knip": "^6.29.0",
     "postcss": "^8.4.38",
     "prettier": "^3.9.5",
     "react-doctor": "^0.7.8",
