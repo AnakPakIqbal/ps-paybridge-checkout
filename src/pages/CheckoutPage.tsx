@@ -1,18 +1,20 @@
 import gsap from 'gsap';
-import { AlertTriangle, ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
-import type {
-  CardTokenDetails,
-  CheckoutSession,
-  PaymentMethodTabId,
-  PspProvider,
-} from '../types/checkout';
+import type { CardTokenDetails, CheckoutSession, PaymentMethodTabId } from '../types/checkout';
 
 import { icons } from '../atoms/icons';
 import StatusIcon from '../atoms/StatusIcon';
 import { isCardFormComplete, useCardForm } from '../hooks/useCardForm';
 import SecureNotice from '../molecules/SecureNotice';
+import {
+  ErrorBanner,
+  ExpiredView,
+  FailedView,
+  PaidView,
+  SkeletonLoader,
+} from '../molecules/StatusViews';
 import MidtransCardForm from '../organisms/cards/midtrans/MidtransCardForm';
 import XenditCardComponent from '../organisms/cards/xendit/XenditCardComponent';
 import EwalletForm from '../organisms/EwalletForm';
@@ -37,8 +39,8 @@ import {
   SESSION_STATUS,
   VA_PROTOCOL_PREFIX,
 } from '../types/checkout';
+import { deriveInitialMethodSelection, tokenizeCard } from '../utils/checkoutHelpers';
 import { formatCurrency } from '../utils/formatCurrency';
-import { loadScript } from '../utils/loadScript';
 
 const PROCESSING_LABEL = 'Processing...';
 
@@ -59,209 +61,6 @@ declare global {
       ) => void;
     };
   }
-}
-
-interface InitialMethodSelection {
-  vaMethodCode: string | null;
-  ewalletMethodCode: string | null;
-  tab: PaymentMethodTabId | null;
-}
-
-// Derives which VA/e-wallet method (if any) should be pre-selected, and which
-// tab to land on, from a session's available payment methods.
-function deriveInitialMethodSelection(
-  availableMethods: CheckoutSession['availableMethods'],
-): InitialMethodSelection {
-  if (!availableMethods) {
-    return { vaMethodCode: null, ewalletMethodCode: null, tab: null };
-  }
-
-  const [firstVaMethod] = availableMethods.filter(
-    (option) => option.category === PAYMENT_METHOD_CATEGORY.VIRTUAL_ACCOUNT,
-  );
-  const [firstWalletMethod] = availableMethods.filter(
-    (option) =>
-      option.category === PAYMENT_METHOD_CATEGORY.E_WALLET ||
-      option.category === PAYMENT_METHOD_CATEGORY.QR_CODE,
-  );
-
-  const hasCard = availableMethods.some(
-    (option) => option.category === PAYMENT_METHOD_CATEGORY.CARD,
-  );
-  const hasVa = availableMethods.some(
-    (option) => option.category === PAYMENT_METHOD_CATEGORY.VIRTUAL_ACCOUNT,
-  );
-  const hasEwallet = availableMethods.some(
-    (option) =>
-      option.category === PAYMENT_METHOD_CATEGORY.E_WALLET ||
-      option.category === PAYMENT_METHOD_CATEGORY.QR_CODE,
-  );
-
-  let tab: PaymentMethodTabId | null = null;
-  if (hasVa) tab = PAYMENT_METHOD_TAB.VA;
-  else if (hasEwallet) tab = PAYMENT_METHOD_TAB.EWALLET;
-  else if (hasCard) tab = PAYMENT_METHOD_TAB.CARD;
-
-  return {
-    vaMethodCode: firstVaMethod?.code ?? null,
-    ewalletMethodCode: firstWalletMethod?.code ?? null,
-    tab,
-  };
-}
-
-// Tokenize card and complete card charge flow. Returns the PSP token string,
-// or null when the provider (Xendit) needs raw card details instead of a token.
-// Module scope: closes over no component state, only its own params/imports.
-async function tokenizeCard(
-  provider: PspProvider,
-  cardDetailsObj: CardTokenDetails,
-): Promise<string | null> {
-  const { number, cvv, expiryMonth, expiryYear } = cardDetailsObj;
-
-  if (provider === PSP_PROVIDER.MIDTRANS) {
-    const clientKey = window.MIDTRANS_CLIENT_KEY ?? '';
-    const environment = window.MIDTRANS_ENVIRONMENT ?? 'sandbox';
-
-    await loadScript(
-      'midtrans-script',
-      'https://api.midtrans.com/v2/assets/js/midtrans-new-3ds.min.js',
-      {
-        'data-environment': environment,
-        'data-client-key': clientKey,
-      },
-    );
-
-    const midtransSdk = window.MidtransNew3ds;
-    if (!midtransSdk) {
-      throw new Error('Midtrans card SDK failed to load.');
-    }
-
-    return new Promise<string>((resolve, reject) => {
-      const cardData = {
-        card_number: number.replace(/\s/g, ''),
-        card_cvv: cvv,
-        card_exp_month: expiryMonth,
-        card_exp_year: expiryYear,
-      };
-
-      midtransSdk.getCardToken(cardData, {
-        onSuccess: (response) => {
-          if (response.token_id) {
-            resolve(response.token_id);
-          } else {
-            reject(new Error('Card tokenization succeeded but no token ID was returned.'));
-          }
-        },
-        onFailure: (response) => {
-          reject(new Error(response.status_message ?? 'Midtrans card tokenization failed.'));
-        },
-      });
-    });
-  }
-  // Xendit V3 uses Full PAN: raw card details go to the backend
-  // which sends them directly to Xendit's /v3/payment_requests.
-  // No client-side tokenization SDK is needed.
-  return null;
-}
-
-function SkeletonLoader() {
-  return (
-    <div className="flex flex-col gap-6 animate-pulse">
-      <div className="h-5 bg-lineSoft rounded w-1/3 mb-2" />
-      <div className="h-32 bg-lineSoft rounded-xl2 w-full mb-2" />
-      <div className="space-y-4">
-        <div className="h-12 bg-lineSoft rounded-xl w-full" />
-        <div className="grid grid-cols-2 gap-4">
-          <div className="h-12 bg-lineSoft rounded-xl" />
-          <div className="h-12 bg-lineSoft rounded-xl" />
-        </div>
-        <div className="h-12 bg-lineSoft rounded-xl w-full" />
-      </div>
-      <div className="h-14 bg-lineSoft rounded-xl w-full mt-4" />
-    </div>
-  );
-}
-
-interface ErrorBannerProps {
-  message: string | null;
-  onClose?: () => void;
-}
-
-function PaidView({ session }: Readonly<{ session: CheckoutSession }>) {
-  return (
-    <div className="flex flex-col items-center justify-center h-full text-center py-10 max-w-sm mx-auto">
-      <div className="w-20 h-20 bg-brandDim/80 border border-brand/35 rounded-full flex items-center justify-center mb-6 shadow-xl shadow-brand/10">
-        <StatusIcon variant="success" />
-      </div>
-      <h2 className="text-2xl font-bold text-text mb-2">Payment Successful</h2>
-      <p className="text-sm text-muted mb-6 leading-relaxed">
-        Thank you! Your payment has been processed successfully. You can now close this tab safely.
-      </p>
-      <div className="w-full bg-panel2 border border-lineSoft rounded-xl p-4 text-left text-xs text-muted space-y-2 mb-2">
-        <div className="flex justify-between">
-          <span>Order Ref:</span>
-          <span className="font-mono text-text">{session.orderId}</span>
-        </div>
-        <div className="flex justify-between">
-          <span>Total Paid:</span>
-          <span className="text-brand font-semibold">
-            {formatCurrency(session.amount, session.currency)}
-          </span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function FailedView() {
-  return (
-    <div className="flex flex-col items-center justify-center h-full text-center py-10 max-w-sm mx-auto">
-      <div className="w-20 h-20 bg-red-500/10 border border-red-500/20 rounded-full flex items-center justify-center mb-6 shadow-xl shadow-red-500/5">
-        <StatusIcon variant="failed" />
-      </div>
-      <h2 className="text-2xl font-bold text-text mb-2">Payment Failed</h2>
-      <p className="text-sm text-muted mb-6 leading-relaxed">
-        This payment attempt was unsuccessful. Please return to the merchant application and try
-        again.
-      </p>
-    </div>
-  );
-}
-
-function ExpiredView() {
-  return (
-    <div className="flex flex-col items-center justify-center h-full text-center py-10 max-w-sm mx-auto">
-      <div className="w-20 h-20 bg-yellow-500/10 border border-yellow-500/20 rounded-full flex items-center justify-center mb-6 shadow-xl shadow-yellow-500/5">
-        <StatusIcon variant="expired" />
-      </div>
-      <h2 className="text-2xl font-bold text-text mb-2">Payment Expired</h2>
-      <p className="text-sm text-muted mb-6 leading-relaxed">
-        This checkout session has expired. Please contact the merchant to request a new session.
-      </p>
-    </div>
-  );
-}
-
-function ErrorBanner({ message, onClose }: Readonly<ErrorBannerProps>) {
-  if (!message) return null;
-  return (
-    <div className="flex items-start gap-3 bg-red-500/10 border border-red-500/20 text-red-200 px-4 py-3 rounded-xl text-xs mb-4">
-      <AlertTriangle className="text-red-500 flex-shrink-0 mt-0.5" size={14} />
-      <div className="flex-1">
-        <p className="font-semibold mb-0.5">Payment Error</p>
-        <p>{message}</p>
-      </div>
-      {onClose && (
-        <button
-          type="button"
-          onClick={onClose}
-          className="text-red-400 hover:text-red-200 text-xs font-semibold self-start"
-        >
-          Dismiss
-        </button>
-      )}
-    </div>
-  );
 }
 
 export default function CheckoutPage() {
@@ -569,12 +368,22 @@ export default function CheckoutPage() {
   // Called when Xendit's Components SDK fires `session-complete` client-side — the card
   // was tokenized/charged directly with Xendit, so we resolve the final outcome from our
   // backend (which itself queries Xendit) rather than knowing it locally.
+  //
+  // We echo back the paymentSessionId the backend originally handed us (via
+  // session.paymentAttempt.providerChargeId, right after select-method) so the backend
+  // can verify it's resolving the exact session this mounted Components UI just
+  // completed, instead of trusting whichever PaymentAttempt row happens to be latest.
   const resolveXenditSession = async () => {
-    if (!sessionId) return;
+    const paymentSessionId = session?.paymentAttempt?.providerChargeId;
+    if (!sessionId || !paymentSessionId) return;
     setSubmitting(true);
     setFormError(null);
     try {
-      const resolvedSession = await resolveCheckoutSession(sessionId, token ?? '');
+      const resolvedSession = await resolveCheckoutSession(
+        sessionId,
+        token ?? '',
+        paymentSessionId,
+      );
       setSession(resolvedSession);
       if (resolvedSession.checkoutToken) {
         setToken(resolvedSession.checkoutToken);

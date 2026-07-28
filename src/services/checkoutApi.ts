@@ -54,12 +54,18 @@ export function submitCardToken(
   }).then((res) => requestSession(res, 'Failed to complete credit card transaction.'));
 }
 
-export function resolveCheckoutSession(sessionId: string, token: string): Promise<CheckoutSession> {
+export function resolveCheckoutSession(
+  sessionId: string,
+  token: string,
+  paymentSessionId: string,
+): Promise<CheckoutSession> {
   return fetch(`/checkout/${sessionId}/resolve-session`, {
     method: 'POST',
     headers: {
+      'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`,
     },
+    body: JSON.stringify({ paymentSessionId }),
   }).then((res) => requestSession(res, 'Failed to resolve the Xendit card session.'));
 }
 

@@ -5,8 +5,7 @@ export const PAYMENT_METHOD_CATEGORY = {
   QR_CODE: 'qr_code',
 } as const;
 
-type PaymentMethodCategory =
-  (typeof PAYMENT_METHOD_CATEGORY)[keyof typeof PAYMENT_METHOD_CATEGORY];
+type PaymentMethodCategory = (typeof PAYMENT_METHOD_CATEGORY)[keyof typeof PAYMENT_METHOD_CATEGORY];
 
 // The three tabs shown in the checkout UI — a UI-level grouping distinct from
 // PaymentMethodCategory (e_wallet and qr_code both map to the "ewallet" tab).
@@ -59,9 +58,24 @@ export interface PaymentAttempt {
   status: string;
   paymentMethod?: string;
   checkoutUrl?: string;
+  // The PSP-side charge/session identifier — for Xendit Components cards, this is the
+  // Payment Session id, echoed back on resolve-session so the backend can verify it's
+  // resolving the exact session this attempt's Components UI completed.
+  providerChargeId?: string;
   // Only populated for a Xendit Components card attempt — the session-scoped key used
   // to initialize the Xendit Components SDK client-side.
   componentsSdkKey?: string;
+}
+
+export interface OrderItem {
+  name: string;
+  quantity: number;
+  price: number;
+  description?: string;
+}
+
+export interface CheckoutMerchant {
+  name: string;
 }
 
 export interface CheckoutSession {
@@ -70,9 +84,16 @@ export interface CheckoutSession {
   currency: string;
   orderId: string;
   provider: PspProvider;
-  checkoutToken?: string;
-  availableMethods?: PaymentMethodOption[];
-  paymentAttempt?: PaymentAttempt;
+  customerEmail?: string | undefined;
+  customerName?: string | undefined;
+  customerMobileNumber?: string | undefined;
+  description?: string | undefined;
+  items?: OrderItem[] | undefined;
+  metadata?: Record<string, unknown> | undefined;
+  checkoutToken?: string | undefined;
+  merchant?: CheckoutMerchant | undefined;
+  availableMethods?: PaymentMethodOption[] | undefined;
+  paymentAttempt?: PaymentAttempt | undefined;
 }
 
 export interface CardTokenDetails {
