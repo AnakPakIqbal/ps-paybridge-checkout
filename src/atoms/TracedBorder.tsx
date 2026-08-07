@@ -2,7 +2,6 @@ import gsap from 'gsap';
 import { useEffect, useRef } from 'react';
 
 interface TracedBorderProps {
-  /** 0 to 1 — how much of the rectangle's perimeter should be stroked in. */
   progress: number;
   className?: string;
 }

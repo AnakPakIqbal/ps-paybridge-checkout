@@ -6,7 +6,6 @@ import TracedBorder from './TracedBorder';
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;
-  /** 0 to 1 — how much of the field's expected length is filled in. */
   progress?: number;
 }
 

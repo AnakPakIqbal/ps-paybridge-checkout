@@ -7,8 +7,6 @@ export const PAYMENT_METHOD_CATEGORY = {
 
 type PaymentMethodCategory = (typeof PAYMENT_METHOD_CATEGORY)[keyof typeof PAYMENT_METHOD_CATEGORY];
 
-// The three tabs shown in the checkout UI — a UI-level grouping distinct from
-// PaymentMethodCategory (e_wallet and qr_code both map to the "ewallet" tab).
 export const PAYMENT_METHOD_TAB = {
   CARD: 'card',
   VA: 'va',
@@ -58,12 +56,7 @@ export interface PaymentAttempt {
   status: string;
   paymentMethod?: string;
   checkoutUrl?: string;
-  // The PSP-side charge/session identifier — for Xendit Components cards, this is the
-  // Payment Session id, echoed back on resolve-session so the backend can verify it's
-  // resolving the exact session this attempt's Components UI completed.
   providerChargeId?: string;
-  // Only populated for a Xendit Components card attempt — the session-scoped key used
-  // to initialize the Xendit Components SDK client-side.
   componentsSdkKey?: string;
 }
 

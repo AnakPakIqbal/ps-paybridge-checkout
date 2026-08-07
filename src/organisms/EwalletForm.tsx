@@ -20,11 +20,6 @@ export default function EwalletForm({
 }: Readonly<EwalletFormProps>) {
   if (paymentAttempt) {
     const checkoutUrl = paymentAttempt.checkoutUrl ?? '';
-    // Midtrans's own QR endpoint (GoPay's and QRIS's "generate-qr-code" action) already
-    // returns a scannable QR *image* at a path like ".../qr-code" — no file extension, so
-    // it doesn't match a simple .png/.jpg check. Use that image directly; don't re-encode
-    // its URL as text through a third-party QR generator, which just produces a QR that
-    // points back at the image instead of showing the actual payment QR.
     const isMidtransQrEndpoint = /\/qr-code(?:$|[/?])/i.test(checkoutUrl);
     const isImageUrl = /\.(png|jpg|jpeg|gif)(?:$|\?)/i.test(checkoutUrl);
     const isQris = isMidtransQrEndpoint || isImageUrl;

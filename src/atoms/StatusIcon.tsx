@@ -15,9 +15,6 @@ const VARIANT_COLOR: Record<StatusVariant, string> = {
   waiting: '#1f5fd6',
 };
 
-// The inner mark's `d` for each variant, drawn in a 0 0 24 24 viewBox matching the
-// outer circle so both paths share one coordinate space. 'waiting' has no mark — its
-// ring itself becomes the spinning indicator instead (see the component below).
 const VARIANT_MARK: Record<'success' | 'failed' | 'expired', string> = {
   success: 'M7 12.5 L10.5 16 L17 8.5',
   failed: 'M8 8 L16 16 M16 8 L8 16',

@@ -6,9 +6,6 @@ export function loadScript(
   return new Promise<void>((resolve, reject) => {
     const existing = document.getElementById(id);
     if (existing) {
-      // The SDK reads attributes like data-client-key once, at script-load time — an
-      // existing tag whose attributes no longer match what this call needs (e.g. a
-      // stale/blank data-client-key from an earlier attempt) must be replaced, not reused.
       const isStale = Object.entries(attributes).some(
         ([key, val]) => existing.getAttribute(key) !== val,
       );

@@ -2,10 +2,6 @@ import { useEffect, useRef, useState } from 'react';
 
 import { loadScript } from '../../../utils/loadScript';
 
-// Pinned to the latest published xendit-components-web version as of this writing
-// (npm view xendit-components-web versions). Verified reachable via curl — the CDN
-// path requires a "v"-prefixed version, "latest" is not a valid alias.
-// Bump this when upgrading; check npm for newer versions periodically.
 const XENDIT_COMPONENTS_SCRIPT_URL = 'https://assets.xendit.co/components/v0.0.25/index.umd.js';
 const XENDIT_COMPONENTS_SCRIPT_ID = 'xendit-components-script';
 
@@ -25,9 +21,6 @@ interface XenditComponentsInstance {
 
 declare global {
   interface Window {
-    // The UMD bundle sets globalThis.Xendit = {...exports}, so the constructor lives at
-    // window.Xendit.XenditComponents — not window.XenditComponents directly (verified by
-    // inspecting the published bundle's UMD wrapper and its named exports).
     Xendit?: {
       XenditComponents: new (opts: {
         componentsSdkKey: string;
@@ -46,17 +39,12 @@ interface XenditCardComponentProps {
   onError: (message: string) => void;
 }
 
-// Mounts Xendit's own embedded card UI (iframe-based fields) for tokenized card
-// payments — raw card data is entered directly into Xendit's fields and never touches
-// our JS or backend. Replaces the custom CardForm used for Midtrans, which has no
-// equivalent concept and is unaffected by this component.
 export default function XenditCardComponent({
   componentsSdkKey,
   onComplete,
   onError,
 }: Readonly<XenditCardComponentProps>) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const actionContainerRef = useRef<HTMLDivElement>(null);
   const componentsRef = useRef<XenditComponentsInstance | null>(null);
   const [ready, setReady] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -67,19 +55,10 @@ export default function XenditCardComponent({
      same call sites, plus `unmount()` on the SDK instance itself. */
   useEffect(() => {
     let cancelled = false;
-    // Populated once the SDK mounts, so the cleanup below can unsubscribe the exact
-    // handler instances it registered — `unmount?.()` alone isn't guaranteed by the
-    // SDK's contract to also remove these listeners.
     const listeners: { event: string; handler: () => void }[] = [];
 
     const onSubmissionReady = () => {
       if (!cancelled) setReady(true);
-    };
-    const onActionBegin = () => {
-      const components = componentsRef.current;
-      if (components && actionContainerRef.current && !actionContainerRef.current.hasChildNodes()) {
-        actionContainerRef.current.appendChild(components.createActionContainerComponent());
-      }
     };
     const onSessionComplete = () => {
       if (!cancelled) onComplete();
@@ -99,10 +78,6 @@ export default function XenditCardComponent({
         });
         componentsRef.current = components;
 
-        // getActiveChannels/createChannelComponent throw until the session's world
-        // state has loaded — the SDK signals that via an `init` event fired once,
-        // asynchronously, after construction. Wire this before anything else so we
-        // never race it (verified against the SDK's own assertInitialized() message).
         const onInit = () => {
           if (cancelled || !containerRef.current) return;
           try {
@@ -121,12 +96,10 @@ export default function XenditCardComponent({
 
         components.addEventListener('init', onInit);
         components.addEventListener('submission-ready', onSubmissionReady);
-        components.addEventListener('action-begin', onActionBegin);
         components.addEventListener('session-complete', onSessionComplete);
         listeners.push(
           { event: 'init', handler: onInit },
           { event: 'submission-ready', handler: onSubmissionReady },
-          { event: 'action-begin', handler: onActionBegin },
           { event: 'session-complete', handler: onSessionComplete },
         );
       } catch (err) {
@@ -151,7 +124,6 @@ export default function XenditCardComponent({
   return (
     <div className="flex flex-col gap-4">
       <div ref={containerRef} className="min-h-[120px]" />
-      <div ref={actionContainerRef} />
       <button
         type="button"
         disabled={!ready || submitting}
