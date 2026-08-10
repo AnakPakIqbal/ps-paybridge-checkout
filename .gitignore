@@ -31,3 +31,7 @@ Thumbs.db
 
 # TypeScript
 *.tsbuildinfo
+
+# Agent skills (local only)
+.claude/
+.agents/
