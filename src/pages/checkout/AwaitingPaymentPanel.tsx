@@ -86,7 +86,7 @@ export default function AwaitingPaymentPanel({
 
       <div
         ref={panelRef}
-        className={`rounded-xl2 border border-lineSoft bg-panel2/30 p-6 ${
+        className={`rounded-xl2 border border-lineSoft bg-panel2/30 p-6 flex flex-col gap-5 ${
           isAwaitingCardInput ? '' : 'flex-1'
         }`}
       >

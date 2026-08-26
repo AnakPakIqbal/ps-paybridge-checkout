@@ -129,7 +129,7 @@ export default function MethodSelectionPanel({
 
           <div
             ref={panelRef}
-            className={`rounded-xl2 border border-lineSoft bg-panel2/30 p-6 ${
+            className={`rounded-xl2 border border-lineSoft bg-panel2/30 p-6 flex flex-col gap-5 ${
               method === PAYMENT_METHOD_TAB.CARD ? '' : 'flex-1'
             }`}
           >

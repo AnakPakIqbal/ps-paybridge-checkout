@@ -2,7 +2,7 @@ import paymentSecurityIllustration from '../assets/images/payment-security-illus
 
 export default function PaymentMethodIntro() {
   return (
-    <div className="flex flex-col items-center text-center gap-1 mb-2">
+    <div className="flex flex-col items-center text-center gap-1 mb-6">
       <img
         src={paymentSecurityIllustration}
         alt=""
