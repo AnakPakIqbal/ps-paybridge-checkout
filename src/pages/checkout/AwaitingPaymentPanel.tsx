@@ -105,7 +105,13 @@ export default function AwaitingPaymentPanel({
           />
         )}
         {!isCard && isVa && <VaAwaitingPayment attempt={attempt} />}
-        {!isCard && !isVa && <EwalletAwaitingPayment attempt={attempt} />}
+        {!isCard && !isVa && (
+          <EwalletAwaitingPayment
+            attempt={attempt}
+            amount={session.amount}
+            currency={session.currency}
+          />
+        )}
       </div>
     </div>
   );

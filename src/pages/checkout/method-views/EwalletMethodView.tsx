@@ -7,10 +7,16 @@ const PROCESSING_LABEL = 'Processing...';
 
 export interface EwalletAwaitingPaymentProps {
   attempt: PaymentAttempt;
+  amount?: number | undefined;
+  currency?: string | undefined;
 }
 
-export function EwalletAwaitingPayment({ attempt }: Readonly<EwalletAwaitingPaymentProps>) {
-  return <EwalletForm paymentAttempt={attempt} />;
+export function EwalletAwaitingPayment({
+  attempt,
+  amount,
+  currency,
+}: Readonly<EwalletAwaitingPaymentProps>) {
+  return <EwalletForm paymentAttempt={attempt} amount={amount} currency={currency} />;
 }
 
 export interface EwalletSelectionProps {

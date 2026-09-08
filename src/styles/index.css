@@ -61,3 +61,41 @@ body,
   scrollbar-width: thin;
   scrollbar-color: #d7e0f0 #f4f7fc;
 }
+
+/* QRIS "live scan target" — corners and glow breathe slowly to read as an
+   active target rather than a static image, without competing for attention. */
+@keyframes qr-target-glow-pulse {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes qr-target-reticle-pulse {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.qr-target-glow {
+  animation: qr-target-glow-pulse 3.2s ease-in-out infinite;
+}
+
+.qr-target-reticle {
+  animation: qr-target-reticle-pulse 3.2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .qr-target-glow,
+  .qr-target-reticle {
+    animation: none;
+    opacity: 0.7;
+  }
+}
