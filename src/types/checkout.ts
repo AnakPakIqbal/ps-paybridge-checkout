@@ -52,6 +52,12 @@ export const VA_PROTOCOL_PREFIX = {
   XENDIT: 'xendit-va://',
 } as const;
 
+// QR channels (e.g. QRIS) return a raw EMVCo payload string rather than a URL or a
+// VA number, so they carry their own scheme and are rendered as a scannable QR code.
+export const QR_PROTOCOL_PREFIX = {
+  XENDIT: 'xendit-qr://',
+} as const;
+
 export interface PaymentAttempt {
   status: string;
   paymentMethod?: string;

@@ -1,9 +1,21 @@
 import { ExternalLink, QrCode, Smartphone } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 
 import type { PaymentAttempt, PaymentMethodOption } from '../types/checkout';
 
 import WalletOption from '../molecules/WalletOption';
-import { PAYMENT_METHOD_CATEGORY } from '../types/checkout';
+import { PAYMENT_METHOD_CATEGORY, QR_PROTOCOL_PREFIX } from '../types/checkout';
+
+// Xendit QR channels hand back a raw EMVCo payload as `xendit-qr://<CHANNEL>/<payload>`
+// rather than an image URL, so the payload is extracted and rendered client-side.
+function extractQrPayload(checkoutUrl: string): string | null {
+  if (!checkoutUrl.startsWith(QR_PROTOCOL_PREFIX.XENDIT)) return null;
+  const withoutScheme = checkoutUrl.slice(QR_PROTOCOL_PREFIX.XENDIT.length);
+  const separatorIndex = withoutScheme.indexOf('/');
+  if (separatorIndex === -1) return null;
+  const payload = withoutScheme.slice(separatorIndex + 1);
+  return payload.length > 0 ? payload : null;
+}
 
 interface EwalletFormProps {
   availableMethods?: PaymentMethodOption[];
@@ -22,13 +34,14 @@ export default function EwalletForm({
     const checkoutUrl = paymentAttempt.checkoutUrl ?? '';
     const isMidtransQrEndpoint = /\/qr-code(?:$|[/?])/i.test(checkoutUrl);
     const isImageUrl = /\.(png|jpg|jpeg|gif)(?:$|\?)/i.test(checkoutUrl);
-    const isQris = isMidtransQrEndpoint || isImageUrl;
+    const qrPayload = extractQrPayload(checkoutUrl);
+    const isQris = isMidtransQrEndpoint || isImageUrl || qrPayload !== null;
 
-    const qrUrl = isQris && checkoutUrl ? checkoutUrl : null;
+    const qrUrl = isMidtransQrEndpoint || isImageUrl ? checkoutUrl : null;
 
     return (
       <div className="flex flex-col items-center justify-center p-2 text-center h-full">
-        {qrUrl ? (
+        {isQris ? (
           <div className="flex flex-col items-center max-w-sm">
             <div className="w-12 h-12 rounded-full bg-brand/10 text-brand flex items-center justify-center mb-3">
               <QrCode size={24} />
@@ -44,11 +57,21 @@ export default function EwalletForm({
               <div className="absolute top-2 right-2 w-4 h-4 border-t-2 border-r-2 border-brand/40" />
               <div className="absolute bottom-2 left-2 w-4 h-4 border-b-2 border-l-2 border-brand/40" />
               <div className="absolute bottom-2 right-2 w-4 h-4 border-b-2 border-r-2 border-brand/40" />
-              <img
-                src={qrUrl}
-                alt="Payment QR Code"
-                className="w-48 h-48 sm:w-52 sm:h-52 relative z-10"
-              />
+              {qrUrl ? (
+                <img
+                  src={qrUrl}
+                  alt="Payment QR Code"
+                  className="w-48 h-48 sm:w-52 sm:h-52 relative z-10"
+                />
+              ) : (
+                <QRCodeSVG
+                  value={qrPayload ?? ''}
+                  title="Payment QR Code"
+                  level="M"
+                  marginSize={0}
+                  className="w-48 h-48 sm:w-52 sm:h-52 relative z-10"
+                />
+              )}
             </div>
 
             <div className="text-left w-full text-xs text-muted leading-relaxed space-y-3.5 bg-panel px-4 py-4 rounded-xl border border-lineSoft">
