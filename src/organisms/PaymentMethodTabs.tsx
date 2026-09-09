@@ -39,7 +39,13 @@ export default function PaymentMethodTabs({
   return (
     <div>
       {!hasActiveTab && <PaymentMethodIntro />}
-      <div className="flex gap-3" id="payment-tabs">
+      {/* The expanded cards carry a description and get squeezed into unreadable
+          two-word-per-line columns on a phone, so they stack until there is room.
+          The compact tabs are short icon+label pills and stay in a row. */}
+      <div
+        className={`flex gap-3 ${hasActiveTab ? '' : 'flex-col sm:flex-row'}`}
+        id="payment-tabs"
+      >
         {tabs.map((tab) => (
           <PaymentTab
             key={tab.id}

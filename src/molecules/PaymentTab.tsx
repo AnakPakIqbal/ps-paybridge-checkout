@@ -38,7 +38,7 @@ export default function PaymentTab({
     <button
       type="button"
       onClick={onClick}
-      className={`flex-1 flex flex-col items-center gap-2 rounded-xl2 border p-4 text-center transition-all duration-200 ${
+      className={`w-full sm:flex-1 flex flex-col items-center gap-2 rounded-xl2 border p-4 text-center transition-all duration-200 ${
         active
           ? 'border-brand bg-brandDim/40 shadow-sm shadow-brand/10'
           : 'border-lineSoft text-muted bg-panel2 hover:border-line hover:-translate-y-0.5'
