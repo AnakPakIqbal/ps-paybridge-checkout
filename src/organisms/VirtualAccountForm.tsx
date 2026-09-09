@@ -32,15 +32,18 @@ const formatVaNumber = (number: string) => {
   return number.replace(/(.{4})/g, '$1 ').trim();
 };
 
-const getBankIdFromMethodCode = (code: string) => {
-  const upper = code.toUpperCase();
-  if (upper.includes('BCA')) return 'BCA';
-  if (upper.includes('BNI')) return 'BNI';
-  if (upper.includes('BRI')) return 'BRI';
-  if (upper.includes('MANDIRI')) return 'Mandiri';
-  if (upper.includes('PERMATA')) return 'Permata';
-  if (upper.includes('CIMB')) return 'CIMB';
-  return 'Bank';
+// The provider already sends a display name ("BJB Virtual Account", "Sahabat
+// Sampoerna Virtual Account"), so the bank is derived from that rather than a
+// hardcoded allow-list — which previously rendered every bank outside its six
+// entries as an indistinguishable "Bank" tile. The code is only a fallback for a
+// method that arrives without a name.
+const getBankLabel = (method: PaymentMethodOption) => {
+  // Whitespace is collapsed first so the suffix match stays a simple anchored literal
+  // rather than a backtracking-prone pattern.
+  const normalized = method.name.replace(/\s+/g, ' ').trim();
+  const fromName = normalized.replace(/ virtual account$/i, '').trim();
+  if (fromName) return fromName;
+  return method.code.replace(/_VIRTUAL_ACCOUNT$/i, '').replace(/_/g, ' ').trim();
 };
 
 interface VirtualAccountFormProps {
@@ -127,11 +130,10 @@ export default function VirtualAccountForm({
       <h2 className="text-sm font-semibold text-text mb-4">Select your bank</h2>
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         {vaMethods.map((method) => {
-          const bankId = getBankIdFromMethodCode(method.code);
           return (
             <BankOption
               key={method.code}
-              label={bankId}
+              label={getBankLabel(method)}
               active={selectedMethod === method.code}
               onClick={() => {
                 setSelectedMethod?.(method.code);
