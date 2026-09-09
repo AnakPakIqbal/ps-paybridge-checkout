@@ -43,7 +43,11 @@ export default function PaymentMethodTabs({
           two-word-per-line columns on a phone, so they stack until there is room.
           The compact tabs are short icon+label pills and stay in a row. */}
       <div
-        className={`flex gap-3 ${hasActiveTab ? '' : 'flex-col sm:flex-row'}`}
+        className={
+          hasActiveTab
+            ? 'flex gap-1 rounded-xl border border-lineSoft bg-panel2 p-1'
+            : 'flex flex-col sm:flex-row gap-3'
+        }
         id="payment-tabs"
       >
         {tabs.map((tab) => (

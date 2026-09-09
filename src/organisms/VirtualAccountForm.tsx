@@ -128,7 +128,7 @@ export default function VirtualAccountForm({
   return (
     <div>
       <h2 className="text-sm font-semibold text-text mb-4">Select your bank</h2>
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {vaMethods.map((method) => {
           return (
             <BankOption

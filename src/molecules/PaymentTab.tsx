@@ -17,19 +17,24 @@ export default function PaymentTab({
   compact = false,
   onClick,
 }: Readonly<PaymentTabProps>) {
+  // Once a method is chosen these become a segmented control: one bordered track
+  // with the active segment raised out of it, rather than three separate bordered
+  // buttons competing with the panel below them. The icon is dropped on the
+  // narrowest screens so "Virtual Account" stays on one line.
   if (compact) {
     return (
       <button
         type="button"
         onClick={onClick}
-        className={`flex-1 flex items-center justify-center gap-2 rounded-xl border py-3 text-sm font-medium transition-colors duration-150 ${
+        aria-pressed={active}
+        className={`flex-auto min-w-0 flex items-center justify-center gap-1.5 rounded-lg px-1.5 sm:px-3 py-2 text-[11px] sm:text-sm font-semibold whitespace-nowrap transition-all duration-150 ${
           active
-            ? 'border-brand text-text bg-brandDim/40'
-            : 'border-lineSoft text-muted bg-panel2 hover:border-line'
+            ? 'bg-panel text-brand shadow-sm ring-1 ring-brand/20'
+            : 'text-muted hover:text-text'
         }`}
       >
-        <Icon path={icon} size={16} />
-        {label}
+        <Icon path={icon} size={15} className="hidden sm:block flex-shrink-0" />
+        <span className="truncate">{label}</span>
       </button>
     );
   }
