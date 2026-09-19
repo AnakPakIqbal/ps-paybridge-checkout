@@ -7,6 +7,7 @@ import StatusIcon from '../atoms/StatusIcon';
 import { useCardForm } from '../hooks/useCardForm';
 import { useCheckoutSession } from '../hooks/useCheckoutSession';
 import { useMidtransCheckout } from '../hooks/useMidtransCheckout';
+import { useStripeCheckout } from '../hooks/useStripeCheckout';
 import { useXenditCheckout } from '../hooks/useXenditCheckout';
 import { ExpiredView, FailedView, PaidView, SkeletonLoader } from '../molecules/StatusViews';
 import OrderSummaryPanel from '../organisms/OrderSummaryPanel';
@@ -60,6 +61,22 @@ export default function CheckoutPage() {
   }, [method, session?.status]);
 
   const { selectPaymentMethod, resolveXenditSession } = useXenditCheckout({
+    sessionId,
+    token,
+    session,
+    method,
+    hasUserSelectedMethod,
+    overrideSelection,
+    submitting,
+    setSession,
+    setToken,
+    setOverrideSelection,
+    setSubmitting,
+    setFormError,
+    subscribeToSSE,
+  });
+
+  const { resolveStripeSession } = useStripeCheckout({
     sessionId,
     token,
     session,
@@ -179,6 +196,7 @@ export default function CheckoutPage() {
           submitting={submitting}
           validateAndSubmitCard={validateAndSubmitCard}
           resolveXenditSession={resolveXenditSession}
+          resolveStripeSession={resolveStripeSession}
           onChangePaymentMethod={() => {
             setOverrideSelection(true);
             setHasUserSelectedMethod(false);

@@ -38,6 +38,7 @@ export const PAYMENT_ATTEMPT_STATUS = {
 export const PSP_PROVIDER = {
   MIDTRANS: 'midtrans',
   XENDIT: 'xendit',
+  STRIPE: 'stripe',
 } as const;
 
 export type PspProvider = (typeof PSP_PROVIDER)[keyof typeof PSP_PROVIDER];
@@ -45,6 +46,7 @@ export type PspProvider = (typeof PSP_PROVIDER)[keyof typeof PSP_PROVIDER];
 export const CARD_PAYMENT_METHOD_CODE = {
   MIDTRANS_CREDIT_CARD: 'credit_card',
   XENDIT_CARDS: 'CARDS',
+  STRIPE_CARD: 'card',
 } as const;
 
 export const VA_PROTOCOL_PREFIX = {
@@ -64,6 +66,10 @@ export interface PaymentAttempt {
   checkoutUrl?: string;
   providerChargeId?: string;
   componentsSdkKey?: string;
+  // docs/stripe/integration-plan.md risk #5: re-fetched live on every session view while
+  // awaiting confirmation, never persisted server-side -- absent once the attempt is
+  // terminal or for any non-Stripe provider.
+  clientSecret?: string;
 }
 
 export interface OrderItem {

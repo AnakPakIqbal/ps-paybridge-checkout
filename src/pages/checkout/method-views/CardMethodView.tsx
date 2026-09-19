@@ -5,6 +5,7 @@ import StatusIcon from '../../../atoms/StatusIcon';
 import { isCardFormComplete } from '../../../hooks/useCardForm';
 import SecureNotice from '../../../molecules/SecureNotice';
 import MidtransCardForm from '../../../organisms/cards/midtrans/MidtransCardForm';
+import StripeCardElement from '../../../organisms/cards/stripe/StripeCardElement';
 import XenditCardComponent from '../../../organisms/cards/xendit/XenditCardComponent';
 import PaymentFooter from '../../../organisms/PaymentFooter';
 import { PSP_PROVIDER } from '../../../types/checkout';
@@ -26,14 +27,16 @@ export interface CardAwaitingPaymentProps {
   setFormError: (message: string | null) => void;
   validateAndSubmitCard: () => void;
   resolveXenditSession: () => Promise<void>;
+  resolveStripeSession: () => Promise<void>;
 }
 
 // Renders the card panel content once a card charge attempt exists (either still
-// collecting input, or already submitted and awaiting the bank/PSP). Xendit's card
-// input is its own embedded Components UI; Midtrans uses our CardForm + Review/Pay
-// footer. Once submitted (isAwaitingCardInput false), both providers show the same
-// "confirming with your bank" waiting state — the Xendit branch's condition below
-// additionally requires componentsSdkKey, since the Components UI can't mount without it.
+// collecting input, or already submitted and awaiting the bank/PSP). Xendit and Stripe's
+// card input is each its own embedded fields UI (Components / Payment Element);
+// Midtrans uses our CardForm + Review/Pay footer. Once submitted (isAwaitingCardInput
+// false), all three show the same "confirming with your bank" waiting state — the
+// Xendit/Stripe branches' conditions below additionally require their respective
+// session secret, since neither embedded UI can mount without it.
 export function CardAwaitingPayment({
   session,
   isAwaitingCardInput,
@@ -45,8 +48,10 @@ export function CardAwaitingPayment({
   setFormError,
   validateAndSubmitCard,
   resolveXenditSession,
+  resolveStripeSession,
 }: Readonly<CardAwaitingPaymentProps>) {
   const isXendit = session.provider === PSP_PROVIDER.XENDIT;
+  const isStripe = session.provider === PSP_PROVIDER.STRIPE;
   const attempt = session.paymentAttempt;
 
   if (isAwaitingCardInput && isXendit && attempt?.componentsSdkKey) {
@@ -62,6 +67,24 @@ export function CardAwaitingPayment({
         <SecureNotice
           title="Secure payment"
           subtitle="Card details are entered directly into Xendit's secure fields and never touch PayBridge."
+        />
+      </>
+    );
+  }
+
+  if (isAwaitingCardInput && isStripe && attempt?.clientSecret) {
+    return (
+      <>
+        <StripeCardElement
+          clientSecret={attempt.clientSecret}
+          onComplete={() => {
+            void resolveStripeSession();
+          }}
+          onError={setFormError}
+        />
+        <SecureNotice
+          title="Secure payment"
+          subtitle="Card details are entered directly into Stripe's secure fields and never touch PayBridge."
         />
       </>
     );
@@ -142,7 +165,7 @@ export function CardSelection({
   submitting,
   submitSelectedMethod,
 }: Readonly<CardSelectionProps>) {
-  if (session.provider === PSP_PROVIDER.XENDIT) {
+  if (session.provider === PSP_PROVIDER.XENDIT || session.provider === PSP_PROVIDER.STRIPE) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center max-w-xs mx-auto">
         <div className="mb-4">

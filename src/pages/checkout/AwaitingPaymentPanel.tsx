@@ -30,6 +30,7 @@ export interface AwaitingPaymentPanelProps {
   submitting: boolean;
   validateAndSubmitCard: () => void;
   resolveXenditSession: () => Promise<void>;
+  resolveStripeSession: () => Promise<void>;
   onChangePaymentMethod: () => void;
 }
 
@@ -47,6 +48,7 @@ export default function AwaitingPaymentPanel({
   submitting,
   validateAndSubmitCard,
   resolveXenditSession,
+  resolveStripeSession,
   onChangePaymentMethod,
 }: Readonly<AwaitingPaymentPanelProps>) {
   const attempt = session.paymentAttempt;
@@ -54,7 +56,8 @@ export default function AwaitingPaymentPanel({
 
   const isCard =
     attempt.paymentMethod === CARD_PAYMENT_METHOD_CODE.MIDTRANS_CREDIT_CARD ||
-    attempt.paymentMethod === CARD_PAYMENT_METHOD_CODE.XENDIT_CARDS;
+    attempt.paymentMethod === CARD_PAYMENT_METHOD_CODE.XENDIT_CARDS ||
+    attempt.paymentMethod === CARD_PAYMENT_METHOD_CODE.STRIPE_CARD;
   const isAwaitingCardInput = isCard && attempt.status === PAYMENT_ATTEMPT_STATUS.AWAITING_TOKEN;
   const isVa =
     attempt.checkoutUrl?.startsWith(VA_PROTOCOL_PREFIX.MIDTRANS) === true ||
@@ -102,6 +105,7 @@ export default function AwaitingPaymentPanel({
             setFormError={setFormError}
             validateAndSubmitCard={validateAndSubmitCard}
             resolveXenditSession={resolveXenditSession}
+            resolveStripeSession={resolveStripeSession}
           />
         )}
         {!isCard && isVa && <VaAwaitingPayment attempt={attempt} />}
