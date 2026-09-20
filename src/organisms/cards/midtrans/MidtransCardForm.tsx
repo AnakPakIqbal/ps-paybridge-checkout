@@ -6,17 +6,7 @@ import type { CardDetails } from '../../../hooks/useCardForm';
 import Input from '../../../atoms/Input';
 import VirtualCard from '../../../molecules/VirtualCard';
 import { getCardBrand } from '../../../utils/cardBrand';
-
-function formatCardNumber(value: string) {
-  const digits = value.replace(/\D/g, '').slice(0, 16);
-  return digits.replace(/(.{4})/g, '$1 ').trim();
-}
-
-function formatExpiry(value: string) {
-  const digits = value.replace(/\D/g, '').slice(0, 4);
-  if (digits.length >= 3) return digits.slice(0, 2) + '/' + digits.slice(2);
-  return digits;
-}
+import { formatCardNumber, formatExpiry } from '../../../utils/cardInput';
 
 interface MidtransCardFormProps {
   details: CardDetails;

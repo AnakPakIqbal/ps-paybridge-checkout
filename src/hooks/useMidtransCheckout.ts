@@ -16,6 +16,16 @@ declare global {
           onFailure: (response: { status_message?: string }) => void;
         },
       ) => void;
+      // Registers a card with no charge and returns a reusable saved_token_id. Loads its
+      // result as a JSONP script rather than fetch(): Midtrans answers /v2/card/register
+      // with no CORS headers, so a plain cross-origin fetch could never read the reply.
+      registerCard: (
+        cardData: Record<string, string>,
+        callbacks: {
+          onSuccess: (response: { saved_token_id?: string }) => void;
+          onFailure: (response: { status_message?: string }) => void;
+        },
+      ) => void;
     };
   }
 }

@@ -37,12 +37,14 @@ interface XenditCardComponentProps {
   componentsSdkKey: string;
   onComplete: () => void;
   onError: (message: string) => void;
+  submitLabel?: string;
 }
 
 export default function XenditCardComponent({
   componentsSdkKey,
   onComplete,
   onError,
+  submitLabel = 'Pay',
 }: Readonly<XenditCardComponentProps>) {
   const containerRef = useRef<HTMLDivElement>(null);
   const componentsRef = useRef<XenditComponentsInstance | null>(null);
@@ -133,7 +135,7 @@ export default function XenditCardComponent({
         }}
         className="w-full bg-brand text-white font-semibold rounded-xl py-3 text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
       >
-        {submitting ? 'Processing...' : 'Pay'}
+        {submitting ? 'Processing...' : submitLabel}
       </button>
     </div>
   );

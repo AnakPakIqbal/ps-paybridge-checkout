@@ -19,9 +19,8 @@ interface StripeElements {
   submit: () => Promise<{ error?: { message?: string } }>;
 }
 
-interface StripeConfirmPaymentResult {
+interface StripeConfirmResult {
   error?: { message?: string };
-  paymentIntent?: { status: string };
 }
 
 interface StripeInstance {
@@ -29,7 +28,12 @@ interface StripeInstance {
   confirmPayment: (options: {
     elements: StripeElements;
     redirect: 'if_required';
-  }) => Promise<StripeConfirmPaymentResult>;
+  }) => Promise<StripeConfirmResult>;
+  // The SetupIntent twin of confirmPayment: saves the card and charges nothing.
+  confirmSetup: (options: {
+    elements: StripeElements;
+    redirect: 'if_required';
+  }) => Promise<StripeConfirmResult>;
 }
 
 declare global {
@@ -43,12 +47,18 @@ interface StripeCardElementProps {
   clientSecret: string;
   onComplete: () => void;
   onError: (message: string) => void;
+  // 'payment' (the default) confirms a PaymentIntent; 'setup' confirms a SetupIntent, for
+  // saving a card with no charge -- the client secret decides which kind it is.
+  intent?: 'payment' | 'setup';
+  submitLabel?: string;
 }
 
 export default function StripeCardElement({
   clientSecret,
   onComplete,
   onError,
+  intent = 'payment',
+  submitLabel = 'Pay',
 }: Readonly<StripeCardElementProps>) {
   const containerRef = useRef<HTMLDivElement>(null);
   const stripeRef = useRef<StripeInstance | null>(null);
@@ -118,7 +128,11 @@ export default function StripeCardElement({
         return;
       }
 
-      const { error } = await stripe.confirmPayment({ elements, redirect: 'if_required' });
+      const confirmOptions = { elements, redirect: 'if_required' } as const;
+      const { error } =
+        intent === 'setup'
+          ? await stripe.confirmSetup(confirmOptions)
+          : await stripe.confirmPayment(confirmOptions);
       if (error) {
         onError(error.message ?? 'Card payment failed.');
         setSubmitting(false);
@@ -147,7 +161,7 @@ export default function StripeCardElement({
         }}
         className="w-full bg-brand text-white font-semibold rounded-xl py-3 text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
       >
-        {submitting ? 'Processing...' : 'Pay'}
+        {submitting ? 'Processing...' : submitLabel}
       </button>
     </div>
   );
