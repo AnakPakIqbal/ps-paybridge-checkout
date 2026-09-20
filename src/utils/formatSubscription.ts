@@ -1,3 +1,14 @@
+const PROVIDER_NAME: Record<string, string> = {
+  stripe: 'Stripe',
+  xendit: 'Xendit',
+  midtrans: 'Midtrans',
+};
+
+/** The provider's display name, or a neutral phrase for one this page does not know. */
+export function formatProviderName(provider: string): string {
+  return PROVIDER_NAME[provider] ?? 'the payment provider';
+}
+
 const INTERVAL_UNIT: Record<string, string> = {
   DAY: 'day',
   WEEK: 'week',

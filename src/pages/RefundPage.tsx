@@ -1,6 +1,7 @@
 import type { RefundSessionView } from '../types/refund';
 
 import { useRefundSession } from '../hooks/useRefundSession';
+import PortalSidebar from '../molecules/PortalSidebar';
 import { SkeletonLoader } from '../molecules/StatusViews';
 import SinglePanelTemplate from '../templates/SinglePanelTemplate';
 import { REFUND_SESSION_STATE } from '../types/refund';
@@ -47,5 +48,17 @@ export default function RefundPage() {
     return <StateView view={view} />;
   };
 
-  return <SinglePanelTemplate>{renderBody()}</SinglePanelTemplate>;
+  const sidebar = view ? (
+    <PortalSidebar
+      merchantName={view.merchantName}
+      type="refund"
+      orderReference={view.id.slice(0, 12)}
+    />
+  ) : undefined;
+
+  return (
+    <SinglePanelTemplate merchantName={view?.merchantName} portalType="refund" sidebar={sidebar}>
+      {renderBody()}
+    </SinglePanelTemplate>
+  );
 }

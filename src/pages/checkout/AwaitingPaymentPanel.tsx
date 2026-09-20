@@ -1,6 +1,11 @@
 import type { RefObject } from 'react';
 
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Landmark, QrCode } from 'lucide-react';
+import {
+  JCBLogoIcon,
+  MastercardLogoIcon,
+  VisaLogoIcon,
+} from 'react-svg-credit-card-payment-icons';
 
 import type { CardDetails } from '../../hooks/useCardForm';
 import type { CheckoutSession } from '../../types/checkout';
@@ -34,8 +39,6 @@ export interface AwaitingPaymentPanelProps {
   onChangePaymentMethod: () => void;
 }
 
-// Dispatches to the Card/VA/E-wallet view that owns this attempt's checkoutUrl shape —
-// see CardMethodView/VaMethodView/EwalletMethodView for each method's own rendering.
 export default function AwaitingPaymentPanel({
   session,
   panelRef,
@@ -63,21 +66,42 @@ export default function AwaitingPaymentPanel({
     attempt.checkoutUrl?.startsWith(VA_PROTOCOL_PREFIX.MIDTRANS) === true ||
     attempt.checkoutUrl?.startsWith(VA_PROTOCOL_PREFIX.XENDIT) === true;
 
+  const methodName = (attempt.paymentMethod ?? '').replace(/_/g, ' ');
+
   return (
-    <div className={`flex flex-col gap-5 ${isAwaitingCardInput ? '' : 'h-full'}`}>
-      {/* Header Bar with Back Button */}
-      <div className="flex items-center justify-between border-b border-lineSoft pb-3">
+    <div className="flex flex-col">
+      {/* Header Bar with Back Button & Existing Payment Method Logos */}
+      <div className="flex items-center justify-between border-b border-lineSoft pb-3 mb-4">
         <button
           type="button"
           onClick={onChangePaymentMethod}
-          className="flex items-center gap-2 text-xs font-semibold text-muted hover:text-text transition-colors duration-150"
+          className="flex items-center gap-2 text-xs font-semibold text-brand hover:text-brand/80 transition-colors"
         >
           <ArrowLeft size={14} />
           Change Payment Method
         </button>
-        <span className="text-[10px] text-muted flex items-center gap-1 font-mono uppercase bg-panel2 border border-lineSoft px-2.5 py-1 rounded-lg">
-          {(attempt.paymentMethod ?? '').replace(/_/g, ' ')}
-        </span>
+
+        {isCard && (
+          <div className="flex items-center gap-1.5 bg-white border border-lineSoft px-2.5 py-1 rounded-full shadow-2xs">
+            <VisaLogoIcon width={28} className="h-3.5 w-auto" />
+            <MastercardLogoIcon width={20} className="h-3.5 w-auto" />
+            <JCBLogoIcon width={18} className="h-3.5 w-auto" />
+          </div>
+        )}
+
+        {!isCard && isVa && (
+          <span className="text-[11px] text-text flex items-center gap-1.5 bg-white border border-lineSoft px-3 py-1 rounded-full font-semibold shadow-2xs">
+            <Landmark size={13} className="text-emerald-600" />
+            <span>{methodName || 'Virtual Account'}</span>
+          </span>
+        )}
+
+        {!isCard && !isVa && (
+          <span className="text-[11px] text-text flex items-center gap-1.5 bg-white border border-lineSoft px-3 py-1 rounded-full font-semibold shadow-2xs">
+            <QrCode size={13} className="text-purple-600" />
+            <span>{methodName || 'QRIS / E-Wallet'}</span>
+          </span>
+        )}
       </div>
 
       <ErrorBanner
@@ -87,11 +111,10 @@ export default function AwaitingPaymentPanel({
         }}
       />
 
+      {/* Payment Action Panel */}
       <div
         ref={panelRef}
-        className={`rounded-xl2 border border-lineSoft bg-panel2/30 p-6 flex flex-col gap-5 ${
-          isAwaitingCardInput ? '' : 'flex-1'
-        }`}
+        className="rounded-2xl border border-lineSoft bg-panel2/40 p-6 flex flex-col gap-5 shadow-xs my-2"
       >
         {isCard && (
           <CardAwaitingPayment
@@ -117,6 +140,11 @@ export default function AwaitingPaymentPanel({
           />
         )}
       </div>
+
+      <p className="text-[11px] text-muted text-center mt-3 leading-relaxed">
+        Complete your transfer or authorization on your device. Once received, this screen will
+        update to confirmed.
+      </p>
     </div>
   );
 }

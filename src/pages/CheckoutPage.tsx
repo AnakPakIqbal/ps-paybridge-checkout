@@ -46,7 +46,7 @@ export default function CheckoutPage() {
     gsap.fromTo(
       cardRef.current,
       { opacity: 0, y: 16 },
-      { opacity: 1, y: 0, duration: 0.6, ease: 'power2.out' },
+      { opacity: 1, y: 0, duration: 0.6, ease: 'power2.out', clearProps: 'transform' },
     );
   }, []);
 
@@ -234,18 +234,12 @@ export default function CheckoutPage() {
     return null;
   };
 
-  const { number, firstName, lastName, expiry, cvv } = cardDetails;
-  const hideOrderSummary =
-    method === PAYMENT_METHOD_TAB.CARD &&
-    Boolean(number || firstName || lastName || expiry || cvv) &&
-    !reviewConfirmed;
-
   return (
     <div ref={cardRef}>
       <CheckoutTemplate
-        left={<OrderSummaryPanel session={session} />}
-        right={renderRightSide()}
-        hideLeft={hideOrderSummary}
+        form={renderRightSide()}
+        sidebar={<OrderSummaryPanel session={session} />}
+        merchantName={session?.merchant?.name}
       />
     </div>
   );

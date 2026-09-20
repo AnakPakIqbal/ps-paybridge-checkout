@@ -3,7 +3,7 @@ import { icons } from '../atoms/icons';
 
 const items = [
   { icon: icons.shield, label: 'PCI DSS' },
-  { icon: icons.lock, label: 'ISO 27001' },
+  { icon: icons.lock, label: '256-Bit SSL' },
   { icon: icons.shieldCheck, label: '3-D Secure' },
 ];
 

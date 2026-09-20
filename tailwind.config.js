@@ -22,6 +22,9 @@ export default {
       borderRadius: {
         xl2: '18px',
       },
+      spacing: {
+        4.5: '1.125rem',
+      },
     },
   },
   plugins: [],

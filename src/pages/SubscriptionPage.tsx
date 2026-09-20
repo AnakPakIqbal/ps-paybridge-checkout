@@ -1,5 +1,6 @@
 import StatusIcon from '../atoms/StatusIcon';
 import { useSubscriptionSession } from '../hooks/useSubscriptionSession';
+import PortalSidebar from '../molecules/PortalSidebar';
 import StatusPanel from '../molecules/StatusPanel';
 import { SkeletonLoader } from '../molecules/StatusViews';
 import SinglePanelTemplate from '../templates/SinglePanelTemplate';
@@ -72,5 +73,21 @@ export default function SubscriptionPage() {
     );
   };
 
-  return <SinglePanelTemplate>{renderBody()}</SinglePanelTemplate>;
+  const sidebar = view ? (
+    <PortalSidebar
+      merchantName={view.merchantName}
+      type="subscription"
+      orderReference={view.subscription?.id ?? view.id}
+    />
+  ) : undefined;
+
+  return (
+    <SinglePanelTemplate
+      merchantName={view?.merchantName}
+      portalType="subscription"
+      sidebar={sidebar}
+    >
+      {renderBody()}
+    </SinglePanelTemplate>
+  );
 }

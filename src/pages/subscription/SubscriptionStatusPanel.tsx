@@ -5,7 +5,10 @@ import type { SubscriptionSessionView } from '../../types/subscription';
 import Button from '../../atoms/Button';
 import StatusIcon from '../../atoms/StatusIcon';
 import NoticeBanner from '../../molecules/NoticeBanner';
+import ReceiptActionBar from '../../molecules/ReceiptActionBar';
 import StatusPanel from '../../molecules/StatusPanel';
+import SubscriptionPassCard from '../../molecules/SubscriptionPassCard';
+import SubscriptionTimeline from '../../molecules/SubscriptionTimeline';
 import { SUBSCRIPTION_MODE, SUBSCRIPTION_SESSION_STATE } from '../../types/subscription';
 import PlanSummary from './PlanSummary';
 
@@ -24,32 +27,42 @@ function CancelControl({
   cancelling,
   onCancel,
 }: Readonly<{ merchantName: string; cancelling: boolean; onCancel: () => void }>) {
-  // One inline confirm step, no email or OTP: the link itself is the authorisation, the same
-  // as for checkout and refund. The extra click only guards against a stray tap.
   const [confirming, setConfirming] = useState(false);
 
   if (!confirming) {
     return (
-      <Button
-        type="button"
-        variant="ghost"
-        onClick={() => {
-          setConfirming(true);
-        }}
-      >
-        Cancel subscription
-      </Button>
+      <div className="py-4 my-2 border-t border-lineSoft flex flex-col items-center sm:flex-row sm:justify-between gap-3 text-xs text-muted">
+        <div>
+          <span className="font-semibold text-text block">Manage Membership</span>
+          <span>You can cancel recurring billing at any time.</span>
+        </div>
+        <Button
+          type="button"
+          variant="danger"
+          size="sm"
+          onClick={() => {
+            setConfirming(true);
+          }}
+          className="shrink-0"
+        >
+          Cancel subscription
+        </Button>
+      </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-3 border border-red-500/30 bg-red-500/5 rounded-xl p-4">
-      <p className="text-sm text-text font-semibold">Cancel this subscription?</p>
+    <div className="flex flex-col gap-3 border border-red-500/30 bg-red-500/5 rounded-2xl p-5 my-4">
+      <div className="flex items-center gap-2">
+        <span className="w-2.5 h-2.5 rounded-full bg-red-500" />
+        <p className="text-sm text-text font-bold">Cancel this subscription?</p>
+      </div>
       <p className="text-xs text-muted leading-relaxed">
-        Billing stops immediately and cannot be resumed — you would need a new link from{' '}
-        {merchantName} to subscribe again. Payments you have already made are not refunded.
+        Billing stops immediately and cannot be resumed &mdash; you would need a new invitation link
+        from <strong className="text-text">{merchantName}</strong> to subscribe again. Payments you
+        have already made are not refunded.
       </p>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-3 pt-1">
         <Button
           type="button"
           variant="ghost"
@@ -60,7 +73,12 @@ function CancelControl({
         >
           Keep it
         </Button>
-        <Button type="button" disabled={cancelling} onClick={onCancel}>
+        <Button
+          type="button"
+          disabled={cancelling}
+          onClick={onCancel}
+          className="bg-red-600 hover:bg-red-700 text-white"
+        >
           {cancelling ? 'Cancelling…' : 'Yes, cancel'}
         </Button>
       </div>
@@ -79,65 +97,107 @@ export default function SubscriptionStatusPanel({
 
   if (view.state === SUBSCRIPTION_SESSION_STATE.CANCELED) {
     return (
-      <StatusPanel
-        icon={<StatusIcon variant="expired" />}
-        iconClassName="bg-yellow-500/10 border border-yellow-500/20 shadow-yellow-500/5"
-        title="Subscription canceled"
-      >
-        <p className="text-sm text-muted mb-6 leading-relaxed">
-          This subscription is no longer active and you will not be billed again. If that is not
-          what you expected, contact {view.merchantName}.
-        </p>
-        <PlanSummary view={view} dateLabel="Next payment" date={null} />
-      </StatusPanel>
+      <div className="flex flex-col">
+        <StatusPanel
+          icon={<StatusIcon variant="expired" />}
+          iconClassName="bg-yellow-500/10 border border-yellow-500/20 shadow-yellow-500/5"
+          title="Subscription canceled"
+        >
+          <p className="text-sm text-muted mb-6 leading-relaxed">
+            This subscription is no longer active and you will not be billed again. If this is not
+            what you expected, please contact{' '}
+            <strong className="text-text">{view.merchantName}</strong>.
+          </p>
+        </StatusPanel>
+
+        <SubscriptionTimeline currentStep="canceled" nextBillingDate={null} />
+        <PlanSummary view={view} dateLabel="Last payment" date={null} />
+
+        <ReceiptActionBar referenceId={view.subscription?.id ?? view.id} />
+      </div>
     );
   }
 
   if (view.state === SUBSCRIPTION_SESSION_STATE.ACTIVATING) {
     return (
-      <StatusPanel
-        icon={<StatusIcon variant="waiting" />}
-        iconClassName={BRAND_ICON}
-        title="Activating your subscription"
-      >
-        <p className="text-sm text-muted mb-6 leading-relaxed" role="status">
-          Your card was saved and the subscription is being set up. This page updates by itself.
-        </p>
+      <div className="flex flex-col">
+        <StatusPanel
+          icon={<StatusIcon variant="waiting" />}
+          iconClassName={BRAND_ICON}
+          title="Activating your subscription"
+        >
+          <p className="text-sm text-muted mb-6 leading-relaxed" role="status">
+            Your card was saved and the subscription is being set up with the payment provider.
+            This page updates automatically.
+          </p>
+        </StatusPanel>
+
+        <SubscriptionTimeline currentStep="activating" nextBillingDate={view.plan.anchorDate} />
         <PlanSummary view={view} dateLabel="First payment" date={view.plan.anchorDate} />
-      </StatusPanel>
+      </div>
     );
   }
 
   if (view.state === SUBSCRIPTION_SESSION_STATE.REQUIRES_ACTION) {
     return (
-      <StatusPanel
-        icon={<StatusIcon variant="expired" />}
-        iconClassName="bg-yellow-500/10 border border-yellow-500/20 shadow-yellow-500/5"
-        title="One more step needed"
-      >
-        <p className="text-sm text-muted mb-6 leading-relaxed">
-          Your bank needs an extra confirmation before this subscription can start billing. Please
-          contact {view.merchantName} for help completing it.
-        </p>
+      <div className="flex flex-col">
+        <StatusPanel
+          icon={<StatusIcon variant="expired" />}
+          iconClassName="bg-yellow-500/10 border border-yellow-500/20 shadow-yellow-500/5"
+          title="One more step needed"
+        >
+          <p className="text-sm text-muted mb-6 leading-relaxed">
+            The payment provider needs one more step from you before this subscription can begin.
+            Please contact{' '}
+            <strong className="text-text">{view.merchantName}</strong> for assistance.
+          </p>
+        </StatusPanel>
+
         <PlanSummary view={view} dateLabel="First payment" date={view.plan.anchorDate} />
-      </StatusPanel>
+      </div>
     );
   }
 
   const justSubscribed = view.mode === SUBSCRIPTION_MODE.CREATE;
-  return (
-    <StatusPanel
-      icon={<StatusIcon variant="success" />}
-      iconClassName={BRAND_ICON}
-      title={justSubscribed ? "You're subscribed" : 'Subscription active'}
-    >
-      <p className="text-sm text-muted mb-6 leading-relaxed">
-        {justSubscribed
-          ? `Thank you! Your subscription with ${view.merchantName} is active. You can close this tab safely.`
-          : `Your subscription with ${view.merchantName} is active.`}
-      </p>
-      <PlanSummary view={view} dateLabel="Next payment" date={nextDate} />
 
+  return (
+    <div className="flex flex-col">
+      {/* Status Header */}
+      <div className="flex items-center gap-4 pb-4 border-b border-lineSoft">
+        <div
+          className={`w-14 h-14 shrink-0 rounded-2xl flex items-center justify-center ${BRAND_ICON}`}
+        >
+          <StatusIcon variant="success" size={36} />
+        </div>
+        <div>
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl sm:text-2xl font-bold text-text">
+              {justSubscribed ? "You're subscribed!" : 'Subscription active'}
+            </h1>
+          </div>
+          <p className="text-xs sm:text-sm text-muted mt-0.5 leading-relaxed">
+            {justSubscribed
+              ? `Thank you! Your subscription with ${view.merchantName} is active and ready.`
+              : `Your recurring membership with ${view.merchantName} is active.`}
+          </p>
+        </div>
+      </div>
+
+      {/* Hero Membership Pass Card */}
+      <SubscriptionPassCard view={view} nextDate={nextDate} />
+
+      {/* Visual Lifecycle Timeline */}
+      <SubscriptionTimeline currentStep="active" nextBillingDate={nextDate} />
+
+      {/* Detailed Plan Breakdown */}
+      <div className="mt-2">
+        <h4 className="text-xs font-bold uppercase tracking-wider text-muted mb-2">
+          Billing & Plan Details
+        </h4>
+        <PlanSummary view={view} dateLabel="Next payment" date={nextDate} />
+      </div>
+
+      {/* Manage / Cancel Controls if in Manage mode */}
       {view.mode === SUBSCRIPTION_MODE.MANAGE && (
         <div className="w-full">
           {actionError && (
@@ -155,6 +215,9 @@ export default function SubscriptionStatusPanel({
           />
         </div>
       )}
-    </StatusPanel>
+
+      {/* Receipt Action Bar (Print, Copy ID, Support) */}
+      <ReceiptActionBar referenceId={view.subscription?.id ?? view.id} />
+    </div>
   );
 }
