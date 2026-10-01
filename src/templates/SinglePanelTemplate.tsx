@@ -7,7 +7,7 @@ interface SinglePanelTemplateProps {
   children: ReactNode;
   sidebar?: ReactNode | undefined;
   merchantName?: string | undefined;
-  portalType?: 'subscription' | 'refund' | 'portal' | undefined;
+  portalType?: 'subscription' | 'refund' | 'checkout' | 'portal' | undefined;
 }
 
 /**
@@ -37,21 +37,21 @@ export default function SinglePanelTemplate({
 
       <div className="flex-1 flex items-start justify-center p-4 sm:p-6 md:py-6">
         {sidebar ? (
-          <div className="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          <div className="w-full max-w-5xl bg-panel border border-lineSoft rounded-2xl overflow-hidden shadow-sm grid grid-cols-1 lg:grid-cols-12 lg:divide-x lg:divide-lineSoft items-start">
             <main
               id="portal-main-panel"
-              className="lg:col-span-7 bg-panel border border-line rounded-2xl overflow-hidden shadow-xl shadow-brand/5 p-6 sm:p-8 transition-all print-clean"
+              className="lg:col-span-7 p-6 sm:p-8 transition-all print-clean"
             >
               {children}
             </main>
-            <div className="lg:col-span-5 flex flex-col gap-6 no-print lg:sticky lg:top-6 lg:self-start">
+            <div className="lg:col-span-5 flex flex-col gap-6 p-6 sm:p-8 border-t lg:border-t-0 border-lineSoft no-print lg:sticky lg:top-6 lg:self-start">
               {sidebar}
             </div>
           </div>
         ) : (
           <main
             id="portal-main-panel"
-            className="w-full max-w-xl bg-panel border border-line rounded-2xl overflow-hidden shadow-xl shadow-brand/5 p-6 sm:p-8 transition-all print-clean"
+            className="w-full max-w-xl bg-panel border border-lineSoft rounded-2xl overflow-hidden shadow-sm p-6 sm:p-8 transition-all print-clean"
           >
             {children}
           </main>

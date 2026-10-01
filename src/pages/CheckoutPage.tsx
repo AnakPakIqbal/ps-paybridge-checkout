@@ -11,7 +11,7 @@ import { useStripeCheckout } from '../hooks/useStripeCheckout';
 import { useXenditCheckout } from '../hooks/useXenditCheckout';
 import { ExpiredView, FailedView, PaidView, SkeletonLoader } from '../molecules/StatusViews';
 import OrderSummaryPanel from '../organisms/OrderSummaryPanel';
-import CheckoutTemplate from '../templates/CheckoutTemplate';
+import SinglePanelTemplate from '../templates/SinglePanelTemplate';
 import { PAYMENT_METHOD_TAB, SESSION_STATUS } from '../types/checkout';
 import AwaitingPaymentPanel from './checkout/AwaitingPaymentPanel';
 import MethodSelectionPanel from './checkout/MethodSelectionPanel';
@@ -236,11 +236,13 @@ export default function CheckoutPage() {
 
   return (
     <div ref={cardRef}>
-      <CheckoutTemplate
-        form={renderRightSide()}
-        sidebar={<OrderSummaryPanel session={session} />}
+      <SinglePanelTemplate
+        portalType="checkout"
         merchantName={session?.merchant?.name}
-      />
+        sidebar={<OrderSummaryPanel session={session} />}
+      >
+        {renderRightSide()}
+      </SinglePanelTemplate>
     </div>
   );
 }
