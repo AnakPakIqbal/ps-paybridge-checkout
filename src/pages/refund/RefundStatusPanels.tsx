@@ -1,6 +1,7 @@
 import type { RefundSessionView } from '../../types/refund';
 
 import StatusIcon from '../../atoms/StatusIcon';
+import CollapsibleDetails from '../../molecules/CollapsibleDetails';
 import ReceiptActionBar from '../../molecules/ReceiptActionBar';
 import RefundTimeline from '../../molecules/RefundTimeline';
 import RefundVoucherCard from '../../molecules/RefundVoucherCard';
@@ -50,12 +51,9 @@ export function RefundProcessingPanel({ view }: Readonly<{ view: RefundSessionVi
       <RefundTimeline currentStep="processing" />
 
       {/* Detailed Order Breakdown */}
-      <div className="mt-2">
-        <h4 className="text-xs font-bold uppercase tracking-wider text-muted mb-2">
-          Refund Summary
-        </h4>
+      <CollapsibleDetails title="Refund Summary" className="mt-2">
         <RefundSummary view={view} amountLabel="Being refunded:" amount={amountToDisplay} />
-      </div>
+      </CollapsibleDetails>
 
       {/* Action Bar */}
       <ReceiptActionBar referenceId={view.id} />
@@ -102,12 +100,9 @@ export function RefundCompletedPanel({ view }: Readonly<{ view: RefundSessionVie
       <RefundTimeline currentStep="completed" />
 
       {/* Detailed Order Breakdown */}
-      <div className="mt-2">
-        <h4 className="text-xs font-bold uppercase tracking-wider text-muted mb-2">
-          Settlement Receipt
-        </h4>
+      <CollapsibleDetails title="Settlement Receipt" className="mt-2">
         <RefundSummary view={view} amountLabel="Refunded:" amount={amountToDisplay} />
-      </div>
+      </CollapsibleDetails>
 
       {/* Action Bar */}
       <ReceiptActionBar referenceId={view.id} />
@@ -129,9 +124,9 @@ export function RefundUnavailablePanel({ view }: Readonly<{ view: RefundSessionV
         </p>
       </StatusPanel>
 
-      <div className="mt-4">
+      <CollapsibleDetails title="Remaining Balance" className="mt-4">
         <RefundSummary view={view} amountLabel="Remaining balance:" amount={0} />
-      </div>
+      </CollapsibleDetails>
 
       <ReceiptActionBar referenceId={view.id} />
     </div>

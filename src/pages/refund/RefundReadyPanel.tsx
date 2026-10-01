@@ -3,6 +3,7 @@ import { useId, useState } from 'react';
 import type { RefundSessionView } from '../../types/refund';
 
 import Button from '../../atoms/Button';
+import CollapsibleDetails from '../../molecules/CollapsibleDetails';
 import NoticeBanner from '../../molecules/NoticeBanner';
 import RefundTimeline from '../../molecules/RefundTimeline';
 import RefundVoucherCard from '../../molecules/RefundVoucherCard';
@@ -174,12 +175,12 @@ export default function RefundReadyPanel({
       </Button>
 
       {/* Detailed Order Breakdown */}
-      <div className="mt-5 pt-4 border-t border-lineSoft">
-        <h4 className="text-xs font-bold uppercase tracking-wider text-muted mb-2">
-          Order Summary & Amount Breakdown
-        </h4>
+      <CollapsibleDetails
+        title="Order Summary & Amount Breakdown"
+        className="mt-5 pt-4 border-t border-lineSoft"
+      >
         <RefundSummary view={view} amountLabel="Refund amount:" amount={view.refundableAmount} />
-      </div>
+      </CollapsibleDetails>
 
       <p className="text-[11px] text-muted text-center mt-2 leading-relaxed">
         How long it takes to show up depends on your bank or card issuer.
