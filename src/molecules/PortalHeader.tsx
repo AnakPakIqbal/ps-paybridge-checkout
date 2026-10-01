@@ -28,7 +28,7 @@ export default function PortalHeader({
           <img
             src={paybridgeLogo}
             alt="PayBridge"
-            className="h-8 w-auto bg-white rounded-lg p-1 border border-lineSoft shadow-sm"
+            className="h-12 w-auto bg-white rounded-lg p-1 border border-lineSoft shadow-sm"
           />
           <Badge>{typeLabel}</Badge>
         </div>
