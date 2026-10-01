@@ -81,13 +81,5 @@ export default function SubscriptionPage() {
     />
   ) : undefined;
 
-  return (
-    <SinglePanelTemplate
-      merchantName={view?.merchantName}
-      portalType="subscription"
-      sidebar={sidebar}
-    >
-      {renderBody()}
-    </SinglePanelTemplate>
-  );
+  return <SinglePanelTemplate sidebar={sidebar}>{renderBody()}</SinglePanelTemplate>;
 }

@@ -236,11 +236,7 @@ export default function CheckoutPage() {
 
   return (
     <div ref={cardRef}>
-      <SinglePanelTemplate
-        portalType="checkout"
-        merchantName={session?.merchant?.name}
-        sidebar={<OrderSummaryPanel session={session} />}
-      >
+      <SinglePanelTemplate sidebar={<OrderSummaryPanel session={session} />}>
         {renderRightSide()}
       </SinglePanelTemplate>
     </div>

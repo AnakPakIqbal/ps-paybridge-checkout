@@ -56,9 +56,5 @@ export default function RefundPage() {
     />
   ) : undefined;
 
-  return (
-    <SinglePanelTemplate merchantName={view?.merchantName} portalType="refund" sidebar={sidebar}>
-      {renderBody()}
-    </SinglePanelTemplate>
-  );
+  return <SinglePanelTemplate sidebar={sidebar}>{renderBody()}</SinglePanelTemplate>;
 }
