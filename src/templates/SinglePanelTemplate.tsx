@@ -35,28 +35,31 @@ export default function SinglePanelTemplate({
 
       <PortalHeader merchantName={merchantName} portalType={portalType} />
 
-      <div className="flex-1 flex items-start justify-center p-4 sm:p-6 md:py-6">
-        {sidebar ? (
-          <div className="w-full max-w-5xl bg-panel border border-lineSoft rounded-2xl overflow-hidden shadow-sm grid grid-cols-1 lg:grid-cols-12 lg:divide-x lg:divide-lineSoft items-start">
-            <main
-              id="portal-main-panel"
-              className="lg:col-span-7 p-6 sm:p-8 transition-all print-clean"
-            >
-              {children}
-            </main>
-            <div className="lg:col-span-5 flex flex-col gap-6 p-6 sm:p-8 border-t lg:border-t-0 border-lineSoft no-print lg:sticky lg:top-6 lg:self-start">
+      {sidebar ? (
+        // Full-bleed split like Stripe Checkout: no outer card, the two columns fill the page.
+        <div className="flex-1 w-full grid grid-cols-1 lg:grid-cols-12 items-stretch">
+          <main
+            id="portal-main-panel"
+            className="lg:col-span-7 bg-panel flex justify-center lg:justify-end transition-all print-clean"
+          >
+            <div className="w-full max-w-2xl p-6 sm:p-10 lg:py-12 lg:pr-14">{children}</div>
+          </main>
+          <aside className="lg:col-span-5 bg-panel2/60 border-t lg:border-t-0 lg:border-l border-lineSoft flex justify-center lg:justify-start no-print">
+            <div className="w-full max-w-md flex flex-col gap-6 p-6 sm:p-10 lg:py-12 lg:pl-14 lg:sticky lg:top-0 lg:self-start">
               {sidebar}
             </div>
-          </div>
-        ) : (
+          </aside>
+        </div>
+      ) : (
+        <div className="flex-1 flex items-start justify-center p-4 sm:p-6 md:py-6">
           <main
             id="portal-main-panel"
             className="w-full max-w-xl bg-panel border border-lineSoft rounded-2xl overflow-hidden shadow-sm p-6 sm:p-8 transition-all print-clean"
           >
             {children}
           </main>
-        )}
-      </div>
+        </div>
+      )}
 
       <PortalFooter />
     </div>
