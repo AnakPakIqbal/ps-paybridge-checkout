@@ -79,7 +79,7 @@ export default function PortalSidebar({
   return (
     <aside className="flex flex-col gap-5 w-full">
       {/* Merchant Trust Profile Card */}
-      <div className="bg-panel2/70 border border-lineSoft rounded-2xl p-5 shadow-xs">
+      <div>
         <div className="flex items-center gap-3.5 mb-4">
           <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand to-brandSoft/60 text-white font-bold flex items-center justify-center text-lg shadow-sm">
             {merchantInitial}
@@ -118,7 +118,7 @@ export default function PortalSidebar({
       </div>
 
       {/* Reassurance Guarantees Card */}
-      <div className="bg-gradient-to-br from-brandDim/50 to-panel border border-brand/20 rounded-2xl p-5 shadow-xs">
+      <div>
         <h4 className="text-xs font-bold uppercase tracking-wider text-brand mb-3 flex items-center gap-1.5">
           <svg
             className="w-4 h-4 text-brand"
@@ -147,7 +147,7 @@ export default function PortalSidebar({
       </div>
 
       {/* Interactive FAQ Accordion */}
-      <div className="bg-panel2/50 border border-lineSoft rounded-2xl p-5 shadow-xs">
+      <div>
         <h4 className="text-xs font-bold uppercase tracking-wider text-text mb-3 flex items-center gap-1.5">
           <svg
             className="w-4 h-4 text-muted"
@@ -193,7 +193,7 @@ export default function PortalSidebar({
       </div>
 
       {/* Merchant Help Guidance */}
-      <div className="p-4 rounded-xl bg-white border border-lineSoft text-center text-xs text-muted">
+      <div className="text-center text-xs text-muted">
         <p className="font-semibold text-text mb-1">Need help or inquiries?</p>
         <p className="text-[11px] leading-relaxed">
           Contact <strong className="text-text">{merchantName}</strong> directly for order support

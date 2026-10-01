@@ -54,7 +54,7 @@ export default function OrderSummaryPanel({ session }: Readonly<OrderSummaryPane
   return (
     <div className="flex flex-col gap-5 w-full">
       {/* Merchant Trust Profile Card */}
-      <div className="bg-panel2/70 border border-lineSoft rounded-2xl p-5 shadow-xs">
+      <div>
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand to-brandSoft/60 text-white font-bold flex items-center justify-center text-base shadow-sm">
