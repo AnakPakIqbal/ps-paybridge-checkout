@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react';
 
+import paybridgeLogo from '../assets/images/paybridge-logo.png';
+
 interface SinglePanelTemplateProps {
   children: ReactNode;
   sidebar?: ReactNode | undefined;
@@ -35,6 +37,7 @@ export default function SinglePanelTemplate({
       </main>
       <aside className="order-first lg:col-span-5 bg-panel2 border-b lg:border-b-0 lg:border-r border-lineSoft flex justify-center lg:justify-end no-print">
         <div className="w-full max-w-md flex flex-col gap-6 p-6 sm:p-10 lg:py-16 lg:pr-14 lg:sticky lg:top-0 lg:self-start">
+          <img src={paybridgeLogo} alt="PayBridge" className="h-12 w-auto self-start" />
           {sidebar}
         </div>
       </aside>

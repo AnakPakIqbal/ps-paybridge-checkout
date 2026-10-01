@@ -48,13 +48,7 @@ export default function RefundPage() {
     return <StateView view={view} />;
   };
 
-  const sidebar = view ? (
-    <PortalSidebar
-      merchantName={view.merchantName}
-      type="refund"
-      orderReference={view.id.slice(0, 12)}
-    />
-  ) : undefined;
+  const sidebar = view ? <PortalSidebar merchantName={view.merchantName} /> : undefined;
 
   return <SinglePanelTemplate sidebar={sidebar}>{renderBody()}</SinglePanelTemplate>;
 }

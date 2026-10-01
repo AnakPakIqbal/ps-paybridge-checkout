@@ -1,16 +1,8 @@
-import CollapsibleDetails from './CollapsibleDetails';
-
 interface PortalSidebarProps {
   merchantName: string;
-  type: 'subscription' | 'refund';
-  orderReference?: string;
 }
 
-export default function PortalSidebar({
-  merchantName,
-  type,
-  orderReference,
-}: Readonly<PortalSidebarProps>) {
+export default function PortalSidebar({ merchantName }: Readonly<PortalSidebarProps>) {
   const merchantInitial = merchantName ? merchantName.charAt(0).toUpperCase() : 'M';
 
   return (
@@ -25,39 +17,15 @@ export default function PortalSidebar({
             <div className="flex items-center gap-1.5">
               <h3 className="text-sm font-bold text-text">{merchantName}</h3>
             </div>
-            <p className="text-xs text-muted">Merchant on PayBridge</p>
+            <p className="text-sm text-muted">Merchant on PayBridge</p>
           </div>
         </div>
-
-        <CollapsibleDetails title="Details" className="pt-3 border-t border-lineSoft/80">
-          <div className="space-y-2.5 pt-3 text-xs">
-            <div className="flex items-center justify-between text-muted">
-              <span>Portal Type</span>
-              <span className="text-text font-medium capitalize">{type} Portal</span>
-            </div>
-            {orderReference && (
-              <div className="flex items-center justify-between text-muted">
-                <span>Reference</span>
-                <span className="text-text font-mono text-[11px] bg-white px-2 py-0.5 rounded border border-lineSoft">
-                  {orderReference}
-                </span>
-              </div>
-            )}
-            <div className="flex items-center justify-between text-muted">
-              <span>Card data</span>
-              <span className="text-emerald-600 font-medium flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                Not stored by PayBridge
-              </span>
-            </div>
-          </div>
-        </CollapsibleDetails>
       </div>
 
       {/* Merchant Help Guidance */}
-      <div className="text-center text-xs text-muted">
+      <div className="text-center text-sm text-muted">
         <p className="font-semibold text-text mb-1">Need help or inquiries?</p>
-        <p className="text-[11px] leading-relaxed">
+        <p className="text-xs leading-relaxed">
           Contact <strong className="text-text">{merchantName}</strong> directly for order support
           or to change your plan.
         </p>

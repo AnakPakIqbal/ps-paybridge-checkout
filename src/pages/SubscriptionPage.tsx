@@ -73,13 +73,7 @@ export default function SubscriptionPage() {
     );
   };
 
-  const sidebar = view ? (
-    <PortalSidebar
-      merchantName={view.merchantName}
-      type="subscription"
-      orderReference={view.subscription?.id ?? view.id}
-    />
-  ) : undefined;
+  const sidebar = view ? <PortalSidebar merchantName={view.merchantName} /> : undefined;
 
   return <SinglePanelTemplate sidebar={sidebar}>{renderBody()}</SinglePanelTemplate>;
 }
