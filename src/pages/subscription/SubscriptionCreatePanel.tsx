@@ -1,6 +1,7 @@
 import type { SaveCardPreparation, SubscriptionSessionView } from '../../types/subscription';
 
 import Button from '../../atoms/Button';
+import CollapsibleDetails from '../../molecules/CollapsibleDetails';
 import NoticeBanner from '../../molecules/NoticeBanner';
 import { formatCurrency } from '../../utils/formatCurrency';
 import {
@@ -167,17 +168,17 @@ export default function SubscriptionCreatePanel({
       )}
 
       {/* Detailed Plan Breakdown */}
-      <div className="mt-4 pt-4 border-t border-lineSoft">
-        <h4 className="text-xs font-bold uppercase tracking-wider text-muted mb-3">
-          Full Schedule Breakdown
-        </h4>
+      <CollapsibleDetails
+        title="Full Schedule Breakdown"
+        className="mt-4 pt-4 border-t border-lineSoft"
+      >
         <PlanSummary view={view} dateLabel="First payment" date={view.plan.anchorDate} />
-      </div>
+      </CollapsibleDetails>
 
       <p className="text-[11px] text-muted text-center mt-2 leading-relaxed">
         Your card details are entered directly with {formatProviderName(view.provider)} and never
-        reach PayBridge, which only keeps a token to bill the card on schedule.
-        {' '}Your bank may ask you to confirm the card with 3-D Secure.
+        reach PayBridge, which only keeps a token to bill the card on schedule. Your bank may ask
+        you to confirm the card with 3-D Secure.
       </p>
     </div>
   );

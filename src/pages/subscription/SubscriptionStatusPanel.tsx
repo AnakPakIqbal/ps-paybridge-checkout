@@ -4,6 +4,7 @@ import type { SubscriptionSessionView } from '../../types/subscription';
 
 import Button from '../../atoms/Button';
 import StatusIcon from '../../atoms/StatusIcon';
+import CollapsibleDetails from '../../molecules/CollapsibleDetails';
 import NoticeBanner from '../../molecules/NoticeBanner';
 import ReceiptActionBar from '../../molecules/ReceiptActionBar';
 import StatusPanel from '../../molecules/StatusPanel';
@@ -111,7 +112,9 @@ export default function SubscriptionStatusPanel({
         </StatusPanel>
 
         <SubscriptionTimeline currentStep="canceled" nextBillingDate={null} />
-        <PlanSummary view={view} dateLabel="Last payment" date={null} />
+        <CollapsibleDetails title="Plan Details" className="mt-2">
+          <PlanSummary view={view} dateLabel="Last payment" date={null} />
+        </CollapsibleDetails>
 
         <ReceiptActionBar referenceId={view.subscription?.id ?? view.id} />
       </div>
@@ -127,13 +130,15 @@ export default function SubscriptionStatusPanel({
           title="Activating your subscription"
         >
           <p className="text-sm text-muted mb-6 leading-relaxed" role="status">
-            Your card was saved and the subscription is being set up with the payment provider.
-            This page updates automatically.
+            Your card was saved and the subscription is being set up with the payment provider. This
+            page updates automatically.
           </p>
         </StatusPanel>
 
         <SubscriptionTimeline currentStep="activating" nextBillingDate={view.plan.anchorDate} />
-        <PlanSummary view={view} dateLabel="First payment" date={view.plan.anchorDate} />
+        <CollapsibleDetails title="Plan Details" className="mt-2">
+          <PlanSummary view={view} dateLabel="First payment" date={view.plan.anchorDate} />
+        </CollapsibleDetails>
       </div>
     );
   }
@@ -148,12 +153,14 @@ export default function SubscriptionStatusPanel({
         >
           <p className="text-sm text-muted mb-6 leading-relaxed">
             The payment provider needs one more step from you before this subscription can begin.
-            Please contact{' '}
-            <strong className="text-text">{view.merchantName}</strong> for assistance.
+            Please contact <strong className="text-text">{view.merchantName}</strong> for
+            assistance.
           </p>
         </StatusPanel>
 
-        <PlanSummary view={view} dateLabel="First payment" date={view.plan.anchorDate} />
+        <CollapsibleDetails title="Plan Details" className="mt-2">
+          <PlanSummary view={view} dateLabel="First payment" date={view.plan.anchorDate} />
+        </CollapsibleDetails>
       </div>
     );
   }
@@ -190,12 +197,9 @@ export default function SubscriptionStatusPanel({
       <SubscriptionTimeline currentStep="active" nextBillingDate={nextDate} />
 
       {/* Detailed Plan Breakdown */}
-      <div className="mt-2">
-        <h4 className="text-xs font-bold uppercase tracking-wider text-muted mb-2">
-          Billing & Plan Details
-        </h4>
+      <CollapsibleDetails title="Billing & Plan Details" className="mt-2">
         <PlanSummary view={view} dateLabel="Next payment" date={nextDate} />
-      </div>
+      </CollapsibleDetails>
 
       {/* Manage / Cancel Controls if in Manage mode */}
       {view.mode === SUBSCRIPTION_MODE.MANAGE && (
