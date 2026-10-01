@@ -1,5 +1,7 @@
 import { useState } from 'react';
 
+import CollapsibleDetails from './CollapsibleDetails';
+
 interface FaqItem {
   question: string;
   answer: string;
@@ -90,27 +92,29 @@ export default function PortalSidebar({
           </div>
         </div>
 
-        <div className="space-y-2.5 pt-3 border-t border-lineSoft/80 text-xs">
-          <div className="flex items-center justify-between text-muted">
-            <span>Portal Type</span>
-            <span className="text-text font-medium capitalize">{type} Portal</span>
-          </div>
-          {orderReference && (
+        <CollapsibleDetails title="Details" className="pt-3 border-t border-lineSoft/80">
+          <div className="space-y-2.5 pt-3 text-xs">
             <div className="flex items-center justify-between text-muted">
-              <span>Reference</span>
-              <span className="text-text font-mono text-[11px] bg-white px-2 py-0.5 rounded border border-lineSoft">
-                {orderReference}
+              <span>Portal Type</span>
+              <span className="text-text font-medium capitalize">{type} Portal</span>
+            </div>
+            {orderReference && (
+              <div className="flex items-center justify-between text-muted">
+                <span>Reference</span>
+                <span className="text-text font-mono text-[11px] bg-white px-2 py-0.5 rounded border border-lineSoft">
+                  {orderReference}
+                </span>
+              </div>
+            )}
+            <div className="flex items-center justify-between text-muted">
+              <span>Card data</span>
+              <span className="text-emerald-600 font-medium flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                Not stored by PayBridge
               </span>
             </div>
-          )}
-          <div className="flex items-center justify-between text-muted">
-            <span>Card data</span>
-            <span className="text-emerald-600 font-medium flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-              Not stored by PayBridge
-            </span>
           </div>
-        </div>
+        </CollapsibleDetails>
       </div>
 
       {/* Reassurance Guarantees Card */}
