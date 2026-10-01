@@ -2,7 +2,7 @@ import { Eyebrow } from '../atoms/Text';
 
 interface AmountDisplayProps {
   amount: string;
-  reference: string;
+  reference?: string;
 }
 
 export default function AmountDisplay({ amount, reference }: Readonly<AmountDisplayProps>) {
@@ -23,12 +23,14 @@ export default function AmountDisplay({ amount, reference }: Readonly<AmountDisp
       >
         {amount}
       </div>
-      <p className="text-[11px] text-muted font-mono flex items-center gap-1 mt-0.5">
-        <span>Order ref:</span>
-        <span className="font-semibold text-text bg-panel2 px-1.5 py-0.5 rounded border border-lineSoft">
-          {reference}
-        </span>
-      </p>
+      {reference && (
+        <p className="text-[11px] text-muted font-mono flex items-center gap-1 mt-0.5">
+          <span>Order ref:</span>
+          <span className="font-semibold text-text bg-panel2 px-1.5 py-0.5 rounded border border-lineSoft">
+            {reference}
+          </span>
+        </p>
+      )}
     </div>
   );
 }
