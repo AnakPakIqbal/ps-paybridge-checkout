@@ -108,7 +108,7 @@ export default function MethodSelectionPanel({
           <span className="w-1.5 h-1.5 rounded-full bg-brand animate-pulse" />
           Checkout Order
         </div>
-        <h1 className="text-xl sm:text-2xl font-bold text-text">Choose payment method</h1>
+        <h1 className="text-xl sm:text-2xl font-bold text-text">Choose Payment Method</h1>
         <p className="text-xs sm:text-sm text-muted mt-1 leading-relaxed">
           Select your preferred payment channel to complete your order with{' '}
           <strong className="text-text">{merchantName.trim()}</strong>.
