@@ -119,5 +119,21 @@ export function useCheckoutSession(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const status = session?.status;
+  const orderId = session?.orderId;
+  useEffect(() => {
+    if (window.parent === window) return;
+    if (
+      status !== SESSION_STATUS.PAID &&
+      status !== SESSION_STATUS.FAILED &&
+      status !== SESSION_STATUS.EXPIRED
+    ) {
+      return;
+    }
+    // Merchants still fulfil on the signed webhook, never on this message.
+    // eslint-disable-next-line sonarjs/post-message -- frame-ancestors already limits the parent to the App's embed origins, and the parent's origin is not otherwise knowable here
+    window.parent.postMessage({ type: 'paybridge:checkout', status, orderId }, '*');
+  }, [status, orderId]);
+
   return { sessionId, token, setToken, session, setSession, loading, error, subscribeToSSE };
 }
