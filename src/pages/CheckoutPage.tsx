@@ -6,6 +6,7 @@ import type { PaymentMethodTabId } from '../types/checkout';
 import StatusIcon from '../atoms/StatusIcon';
 import { useCardForm } from '../hooks/useCardForm';
 import { useCheckoutSession } from '../hooks/useCheckoutSession';
+import { useEmbedHeight } from '../hooks/useEmbedHeight';
 import { useMidtransCheckout } from '../hooks/useMidtransCheckout';
 import { useStripeCheckout } from '../hooks/useStripeCheckout';
 import { useXenditCheckout } from '../hooks/useXenditCheckout';
@@ -13,6 +14,7 @@ import { ExpiredView, FailedView, PaidView, SkeletonLoader } from '../molecules/
 import OrderSummaryPanel from '../organisms/OrderSummaryPanel';
 import SinglePanelTemplate from '../templates/SinglePanelTemplate';
 import { PAYMENT_METHOD_TAB, SESSION_STATUS } from '../types/checkout';
+import { isCompactEmbed } from '../utils/embedMode';
 import AwaitingPaymentPanel from './checkout/AwaitingPaymentPanel';
 import MethodSelectionPanel from './checkout/MethodSelectionPanel';
 
@@ -36,6 +38,8 @@ export default function CheckoutPage() {
   const [method, setMethod] = useState<PaymentMethodTabId>(PAYMENT_METHOD_TAB.CARD);
 
   const [hasUserSelectedMethod, setHasUserSelectedMethod] = useState(false);
+  const compact = isCompactEmbed();
+  useEmbedHeight(compact);
   const cardRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -236,7 +240,10 @@ export default function CheckoutPage() {
 
   return (
     <div ref={cardRef}>
-      <SinglePanelTemplate sidebar={<OrderSummaryPanel session={session} />}>
+      <SinglePanelTemplate
+        compact={compact}
+        sidebar={compact ? undefined : <OrderSummaryPanel session={session} />}
+      >
         {renderRightSide()}
       </SinglePanelTemplate>
     </div>

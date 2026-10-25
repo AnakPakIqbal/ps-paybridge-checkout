@@ -1,5 +1,6 @@
 import Icon from '../atoms/Icon';
 import { icons } from '../atoms/icons';
+import { isCompactEmbed } from '../utils/embedMode';
 
 interface SecureNoticeProps {
   title: string;
@@ -7,6 +8,8 @@ interface SecureNoticeProps {
 }
 
 export default function SecureNotice({ title, subtitle }: Readonly<SecureNoticeProps>) {
+  if (isCompactEmbed()) return null;
+
   return (
     <div className="flex items-center gap-3 rounded-xl2 border border-lineSoft bg-panel2/50 px-5 py-4">
       <div className="w-9 h-9 rounded-lg bg-panel flex items-center justify-center text-muted flex-shrink-0">

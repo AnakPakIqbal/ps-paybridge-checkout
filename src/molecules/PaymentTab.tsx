@@ -9,6 +9,7 @@ import {
 import type { PaymentMethodTabId } from '../types/checkout';
 
 import { PAYMENT_METHOD_TAB } from '../types/checkout';
+import { isCompactEmbed } from '../utils/embedMode';
 
 interface PaymentTabProps {
   id: PaymentMethodTabId;
@@ -60,12 +61,16 @@ export default function PaymentTab({
   const IconComponent = config.icon;
 
   if (compact) {
+    // In the narrow merchant iframe the icon sits above the label so the label is never cut.
+    const stacked = isCompactEmbed();
     return (
       <button
         type="button"
         onClick={onClick}
         aria-pressed={active}
-        className={`flex-1 min-w-0 flex items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-xs sm:text-sm font-semibold transition-all duration-150 cursor-pointer ${
+        className={`flex-1 min-w-0 flex items-center justify-center rounded-xl px-3 py-2.5 font-semibold transition-all duration-150 cursor-pointer ${
+          stacked ? 'flex-col gap-1 text-[11px]' : 'gap-2 text-xs sm:text-sm'
+        } ${
           active
             ? 'bg-white text-brand shadow-sm ring-1 ring-brand/20'
             : 'text-muted hover:text-text hover:bg-white/50'
@@ -74,7 +79,7 @@ export default function PaymentTab({
         <span className={`p-1 rounded-md ${active ? config.iconBg : 'text-muted'}`}>
           <IconComponent size={14} />
         </span>
-        <span className="truncate">{label}</span>
+        <span className={stacked ? 'text-center leading-tight' : 'truncate'}>{label}</span>
       </button>
     );
   }

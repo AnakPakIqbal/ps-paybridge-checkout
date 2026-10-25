@@ -10,6 +10,7 @@ import SecureNotice from '../../molecules/SecureNotice';
 import { ErrorBanner } from '../../molecules/StatusViews';
 import PaymentMethodTabs from '../../organisms/PaymentMethodTabs';
 import { PAYMENT_METHOD_CATEGORY, PAYMENT_METHOD_TAB } from '../../types/checkout';
+import { isCompactEmbed } from '../../utils/embedMode';
 import { CardSelection } from './method-views/CardMethodView';
 import { EwalletSelection } from './method-views/EwalletMethodView';
 import { VaSelection } from './method-views/VaMethodView';
@@ -99,21 +100,24 @@ export default function MethodSelectionPanel({
 }: Readonly<MethodSelectionPanelProps>) {
   const tabs = deriveAvailableTabs(session.availableMethods);
   const merchantName = session.merchant?.name ?? 'Merchant';
+  const compact = isCompactEmbed();
 
   return (
     <div className="flex flex-col">
       {/* Checkout Section Header */}
-      <div className="mb-4">
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brandDim text-xs font-semibold text-brand mb-2 border border-brand/20">
-          <span className="w-1.5 h-1.5 rounded-full bg-brand animate-pulse" />
-          Checkout Order
+      {!compact && (
+        <div className="mb-4">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brandDim text-xs font-semibold text-brand mb-2 border border-brand/20">
+            <span className="w-1.5 h-1.5 rounded-full bg-brand animate-pulse" />
+            Checkout Order
+          </div>
+          <h1 className="text-xl sm:text-2xl font-bold text-text">Choose Payment Method</h1>
+          <p className="text-xs sm:text-sm text-muted mt-1 leading-relaxed">
+            Select your preferred payment channel to complete your order with{' '}
+            <strong className="text-text">{merchantName.trim()}</strong>.
+          </p>
         </div>
-        <h1 className="text-xl sm:text-2xl font-bold text-text">Choose Payment Method</h1>
-        <p className="text-xs sm:text-sm text-muted mt-1 leading-relaxed">
-          Select your preferred payment channel to complete your order with{' '}
-          <strong className="text-text">{merchantName.trim()}</strong>.
-        </p>
-      </div>
+      )}
 
       {/* Payment Method Selector */}
       <div className="my-2">
@@ -180,30 +184,32 @@ export default function MethodSelectionPanel({
           <SecureNotice {...NOTICES[method]} />
         </div>
       ) : (
-        <div className="rounded-2xl border border-lineSoft bg-panel2/30 p-8 text-center flex flex-col items-center justify-center my-3 shadow-xs">
-          <div className="w-12 h-12 rounded-2xl bg-brandDim flex items-center justify-center text-brand mb-3 shadow-xs border border-brand/15">
-            <ShieldCheck size={22} className="text-brand" />
+        !compact && (
+          <div className="rounded-2xl border border-lineSoft bg-panel2/30 p-8 text-center flex flex-col items-center justify-center my-3 shadow-xs">
+            <div className="w-12 h-12 rounded-2xl bg-brandDim flex items-center justify-center text-brand mb-3 shadow-xs border border-brand/15">
+              <ShieldCheck size={22} className="text-brand" />
+            </div>
+            <h3 className="font-bold text-text text-sm mb-1">Select a payment channel above</h3>
+            <p className="text-xs text-muted max-w-sm leading-relaxed mb-4">
+              Click Credit Card, Virtual Account, or E-Wallet to enter payment details. All
+              transactions are protected with 256-bit SSL encryption.
+            </p>
+            <div className="flex flex-wrap items-center justify-center gap-2 text-[11px] text-muted font-medium">
+              <span className="flex items-center gap-1.5 bg-white px-3 py-1 rounded-full border border-lineSoft shadow-2xs">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                PCI-DSS Level 1
+              </span>
+              <span className="flex items-center gap-1.5 bg-white px-3 py-1 rounded-full border border-lineSoft shadow-2xs">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                Direct Provider Tokenization
+              </span>
+              <span className="flex items-center gap-1.5 bg-white px-3 py-1 rounded-full border border-lineSoft shadow-2xs">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                3-D Secure
+              </span>
+            </div>
           </div>
-          <h3 className="font-bold text-text text-sm mb-1">Select a payment channel above</h3>
-          <p className="text-xs text-muted max-w-sm leading-relaxed mb-4">
-            Click Credit Card, Virtual Account, or E-Wallet to enter payment details. All
-            transactions are protected with 256-bit SSL encryption.
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-2 text-[11px] text-muted font-medium">
-            <span className="flex items-center gap-1.5 bg-white px-3 py-1 rounded-full border border-lineSoft shadow-2xs">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-              PCI-DSS Level 1
-            </span>
-            <span className="flex items-center gap-1.5 bg-white px-3 py-1 rounded-full border border-lineSoft shadow-2xs">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-              Direct Provider Tokenization
-            </span>
-            <span className="flex items-center gap-1.5 bg-white px-3 py-1 rounded-full border border-lineSoft shadow-2xs">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-              3-D Secure
-            </span>
-          </div>
-        </div>
+        )
       )}
     </div>
   );

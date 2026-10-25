@@ -5,6 +5,9 @@ import paybridgeLogo from '../assets/images/paybridge-logo.png';
 interface SinglePanelTemplateProps {
   children: ReactNode;
   sidebar?: ReactNode | undefined;
+  // Inside the merchant's iframe: just the form, no logo, no summary, and no min-h-screen
+  // (inside an iframe "screen" is the iframe itself, so it could never shrink to fit).
+  compact?: boolean;
 }
 
 /**
@@ -15,7 +18,16 @@ interface SinglePanelTemplateProps {
 export default function SinglePanelTemplate({
   children,
   sidebar,
+  compact = false,
 }: Readonly<SinglePanelTemplateProps>) {
+  if (compact) {
+    return (
+      <main id="portal-main-panel" className="bg-panel p-4 print-clean">
+        {children}
+      </main>
+    );
+  }
+
   if (!sidebar) {
     return (
       <main
